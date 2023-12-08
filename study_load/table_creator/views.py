@@ -6,3 +6,4 @@ def index(request):
         'title': 'Creator',
     }
     return render(request, 'table_creator/table_creator.html', context=context)
+
