@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'table_creator.apps.TableCreatorConfig',
 ]
 
@@ -83,7 +84,7 @@ DATABASES = {
         'USER': cfg.db.db_user,
         'PASSWORD': cfg.db.db_password,
         'HOST': cfg.db.db_host,
-        'PORT': '3306',
+        'PORT': cfg.db.db_port,
         'OPTIONS': {
             'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"'
         }
@@ -135,3 +136,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+FIXTURE_DIRS = 'fixtures/'

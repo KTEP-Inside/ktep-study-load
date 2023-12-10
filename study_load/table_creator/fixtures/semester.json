@@ -1,0 +1,17 @@
+[
+  {
+    "model":"table_creator.Semester",
+    "pk": 1,
+    "fields": {
+      "number": 1
+    }
+  },
+  {
+    "model":"table_creator.Semester",
+    "pk": 2,
+    "fields": {
+      "number": 2
+    }
+  }
+
+]
