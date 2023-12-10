@@ -2,15 +2,19 @@ from django.db import models
 
 
 class Teacher(models.Model):
-    name = models.CharField(max_length=50, verbose_name='ФИО преподавателя')
+    name = models.CharField(unique=True, max_length=60, verbose_name='ФИО преподавателя')
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
 
 
 class Subject(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Предмет')
+    name = models.CharField(unique=True, max_length=100, verbose_name='Предмет')
     teachers = models.ManyToManyField(Teacher, through='TeacherHasSubject')
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -21,9 +25,23 @@ class TeacherHasSubject(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
+    objects = models.Manager()
+
 
 class TypeLoad(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Тип нагрузки')
+
+    types = [  # вынести в функцию для возможности быстрого изменения
+        ('Lectures', 'Лекции'),
+        ('Laboratory work', 'Лабораторные работы'),
+        ('Practical work', 'Практические работы'),
+        ('Internship', 'Практика (УП/ПП)'),
+        ('Consultations', 'Консультации'),
+        ('Credit, exam, tests', 'Зачет, экзамен, контрольные работы'),
+        ('Course project', 'Курсовой проект')
+    ]
+    name = models.CharField(choices=types, max_length=50, verbose_name='Тип нагрузки')
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -36,6 +54,8 @@ class Semester(models.Model):
 
     number = models.IntegerField(verbose_name='Семестр', choices=Semesters.choices)
     type_load = models.ManyToManyField(TypeLoad, through='HoursLoad')
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.number
@@ -52,7 +72,9 @@ class HoursLoad(models.Model):
 
 
 class Speciality(models.Model):
-    name = models.CharField(max_length=15, verbose_name='Специальность')
+    name = models.CharField(unique=True, max_length=15, verbose_name='Специальность')
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -69,14 +91,19 @@ class Course(models.Model):
     course = models.IntegerField(verbose_name='Курс', choices=Courses.choices)
     specialities = models.ManyToManyField(Speciality, through='SpecialityHasCourse')
 
+    objects = models.Manager()
+
     def __str__(self):
         return self.course
 
 
 class SpecialityHasCourse(models.Model):
-    course_has_speciality = models.IntegerField(primary_key=True)
+    course_has_speciality = models.AutoField(primary_key=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
+    name_group = models.CharField(unique=True, max_length=50)
 
     objects = models.Manager()
 
+    def __str__(self):
+        return self.name_group
