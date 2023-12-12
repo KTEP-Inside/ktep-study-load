@@ -1,0 +1,51 @@
+[
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 1,
+    "fields": {
+      "name": "Лекции"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 2,
+    "fields": {
+      "name": "Лабораторные работы"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 3,
+    "fields": {
+      "name": "Практические работы"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 4,
+    "fields": {
+      "name": "Практика (УП/ПП)"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 5,
+    "fields": {
+      "name": "Консультации"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 6,
+    "fields": {
+      "name": "Зачет, экзамен, контрольные работы"
+    }
+  },
+  {
+    "model":"table_creator.TypeLoad",
+    "pk": 7,
+    "fields": {
+      "name": "Курсовой проект"
+    }
+  }
+]
