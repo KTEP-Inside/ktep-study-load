@@ -31,13 +31,13 @@ class TeacherHasSubject(models.Model):
 class TypeLoad(models.Model):
 
     types = [  # вынести в функцию для возможности быстрого изменения
-        ('Lectures', 'Лекции'),
-        ('Laboratory work', 'Лабораторные работы'),
-        ('Practical work', 'Практические работы'),
-        ('Internship', 'Практика (УП/ПП)'),
-        ('Consultations', 'Консультации'),
-        ('Credit, exam, tests', 'Зачет, экзамен, контрольные работы'),
-        ('Course project', 'Курсовой проект')
+        ('Лекции', 'Лекции'),
+        ('Лабораторные работы', 'Лабораторные работы'),
+        ('Практические работы', 'Практические работы'),
+        ('Практика (УП/ПП)', 'Практика (УП/ПП)'),
+        ('Консультации', 'Консультации'),
+        ('Зачет, экзамен, контрольные работы', 'Зачет, экзамен, контрольные работы'),
+        ('Курсовой проект', 'Курсовой проект')
     ]
     name = models.CharField(choices=types, max_length=50, verbose_name='Тип нагрузки')
 
@@ -66,7 +66,7 @@ class HoursLoad(models.Model):
     type_load = models.ForeignKey(TypeLoad, on_delete=models.CASCADE)
     group = models.ForeignKey('SpecialityHasCourse', on_delete=models.CASCADE)
     teacher_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-    hours = models.IntegerField(verbose_name='Часы')
+    hours = models.IntegerField(verbose_name='Часы')  # как взять ДЗ и Э
 
     objects = models.Manager()
 
