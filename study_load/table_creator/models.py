@@ -21,11 +21,14 @@ class Subject(models.Model):
 
 
 class TeacherHasSubject(models.Model):
-    teacher_has_subject = models.IntegerField(primary_key=True)
+    teacher_has_subject = models.AutoField(primary_key=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
     objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.teacher}: {self.subject}"
 
 
 class TypeLoad(models.Model):
@@ -61,14 +64,34 @@ class Semester(models.Model):
         return self.number
 
 
+class Exam(models.Model):
+    class TypeExam(models.TextChoices):
+        exam = 'Э', 'Экзамен'
+        test = 'ДЗ', 'Зачёт'
+
+    exam = models.CharField(max_length=2)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return self.exam
+
+
 class HoursLoad(models.Model):
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     type_load = models.ForeignKey(TypeLoad, on_delete=models.CASCADE)
     group = models.ForeignKey('SpecialityHasCourse', on_delete=models.CASCADE)
     teacher_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-    hours = models.IntegerField(verbose_name='Часы')  # как взять ДЗ и Э
+    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)  # как взять ДЗ и Э
+    exam = models.ForeignKey(Exam, on_delete=models.SET_NULL, null=True)
 
     objects = models.Manager()
+
+    def __str__(self):
+        if self.exam:
+            return f"{self.type_load} {self.group} {self.teacher_subject} {self.exam}"
+        else:
+            return f"{self.type_load} {self.group} {self.teacher_subject} {self.hours}"
 
 
 class Speciality(models.Model):
