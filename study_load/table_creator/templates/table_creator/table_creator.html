@@ -1,4 +1,75 @@
 {% extends 'table_creator/base.html' %}
-
 {% block content %}
+
+
+<table class="main-table">
+  <thead class="main-load">
+    <tr>
+      <td colspan="18">Педагогическая нагрузка
+      <select id="teacher" class="teacher"></select>
+      <select id="education_year" class="education_year"></select>
+      </td>
+    </tr>
+  </thead>
+  <thead class="main-info">
+    <tr>
+      <td rowspan="2">№</td>
+      <td rowspan="2">Дисциплина</td>
+      <td rowspan="2">Группа</td>
+      <td>Б</td>
+      <td>В/Б</td>
+      <td>Всего</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TEST</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2">Праздничные дни</td>
+      <td colspan="18"></td>
+    </tr>
+    <tr>
+      <td colspan="2">Всего</td>
+      <td colspan="18"></td></tr>
+    <tr>
+      <td colspan="2">Итого</td>
+      <td colspan="18"></td></tr>
+  </tfoot>
+
+</table>
+<div>С нагрузкой ознакомлен, не возражаю ___________________________</div>
+<div class="demo-wrapper">
+  <form
+    class="form-upload"
+    id="uploadForm"
+    method="post"
+    enctype="multipart/form-data"
+  >
+      {% csrf_token %}
+    <label class="form-upload__label" for="uploadForm_File">
+      <span class="form-upload__title">Excel файл:</span>
+      <input
+        class="form-upload__input"
+        id="uploadForm_File"
+        type="file"
+        name="file_name"
+        accept=".xlsx"
+      >
+    </label>
+    <input
+      class="form-upload__submit form-upload__submit_orange"
+      id="uploadForm_Submit"
+      type="submit"
+      value="Загрузить файл"
+    >
+    <progress id="progressBar" value="0" max="100"></progress>
+    <div class="form-upload__container">
+      <span class="form-upload__status" id="uploadForm_Status"></span>
+      <span id="uploadForm_Size"></span>
+    </div>
+  </form>
+</div>
 {% endblock %}
