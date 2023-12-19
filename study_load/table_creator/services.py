@@ -6,8 +6,8 @@ from .models import *
 
 def create_group(ws: Worksheet) -> SpecialityHasCourse:
     """Специальность, группа и курс"""
-    speciality = ws['A1'].value.split()[3].strip()
-    name_group = ''.join(ws['A1'].value.split()[3:5])
+    speciality = ws['A4'].value.split()[3].strip()
+    name_group = ' '.join(ws['A4'].value.split()[3:])
 
     num_course = Course.objects.get(pk=int(ws.title[0]))
     speciality_obj, created = Speciality.objects.get_or_create(name=speciality)  # специальность
@@ -40,7 +40,7 @@ def create_type_load(ws: Worksheet,
                      group: SpecialityHasCourse,
                      teacher_subject: TeacherHasSubject):
     """Тип нагрузки и вызов создания записей по семестрам"""
-    for load in ws.iter_cols(min_col=4, min_row=2, max_row=2):  # все типы нагрузки
+    for load in ws.iter_cols(min_col=4, min_row=5, max_row=5):  # все типы нагрузки
 
         if load[0].value is not None:
 
@@ -55,7 +55,7 @@ def create_type_load(ws: Worksheet,
                                          teacher_subject=teacher_subject)
         else:
 
-            break
+            continue
 
 
 def semester_load_writer(ws: Worksheet,
@@ -67,10 +67,11 @@ def semester_load_writer(ws: Worksheet,
     """Валидация и итоговые записи"""
 
     semester = 1
-    semester_obj = Semester.objects.get(pk=semester)
 
     for cell in ws.iter_cols(min_col=load[0].column, max_col=load[0].column + 1,
                              min_row=subject.row, max_row=subject.row):
+        semester_obj = Semester.objects.get(pk=semester)
+
         cur_cell = check_merge_cell(ws, cell)
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
                     group=group, teacher_subject=teacher_subject)
@@ -100,7 +101,7 @@ def create_load(cur_cell: str | int | float,
                 group: SpecialityHasCourse,
                 teacher_subject: TeacherHasSubject):
     """Проверка на тип добавления"""
-    if isinstance(cur_cell, int) and cur_cell not in ['ДЗ', 'Э']:
+    if not isinstance(cur_cell, int) and cur_cell not in ['ДЗ', 'Э']:
         cur_cell = 0
 
     if cur_cell in ['ДЗ', 'Э']:
@@ -120,18 +121,17 @@ def main_func(ws: Worksheet):
     group = create_group(ws)
 
     # получаем преподавателей + их предмет
-    for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=5):
+    for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=8):
         create_table(ws, subject=subject, teachers=teachers, group=group)
 
 
 def add_data():
-    wb = openpyxl.load_workbook(filename=r'C:\Users\user\PycharmProjects\ktep-study-load\study_load\table_creator\ИСиПы+ 2023-2024.xlsx')
-    # wb = openpyxl.load_workbook(
-        # filename=r'/home/mamba/PycharmProjects/ktep-study-load/study_load/table_creator/ИСиПы+ 2023-2024.xlsx')
+    # wb = openpyxl.load_workbook(filename=r'C:\Users\user\PycharmProjects\ktep-study-load\study_load\table_creator\ИСиПы+ 2023-2024.xlsx')
+    wb = openpyxl.load_workbook(
+        filename='/home/mamba/PycharmProjects/ktep-study-load/study_load/table_creator/шаблон РУП 2024-2025.xlsx')
     all_sheets = wb.sheetnames
     for sheet_id, _ in enumerate(all_sheets):
         ws = wb.worksheets[sheet_id]
         main_func(ws)
-
 
 add_data()
