@@ -1,11 +1,12 @@
 {% extends 'table_creator/base.html' %}
 {% block content %}
+{% load my_template_extras %}
 
 
 <table class="main-table">
   <thead class="main-load">
     <tr>
-      <td colspan="18">Педагогическая нагрузка
+      <td colspan="20">Педагогическая нагрузка
       <select id="teacher" class="teacher"></select>
       <select id="education_year" class="education_year"></select>
       </td>
@@ -16,27 +17,38 @@
       <td rowspan="2">№</td>
       <td rowspan="2">Дисциплина</td>
       <td rowspan="2">Группа</td>
+      {% for load in type_load %}
+      <td colspan="2">{{ load }}</td>
+      {% endfor %}
       <td>Б</td>
       <td>В/Б</td>
       <td>Всего</td>
     </tr>
+    <tr>
+      {% with ''|center:type_load_length as range %}
+      {% for _ in range %}
+        <td>1 семестр</td><td>2 семестр</td>
+      {% endfor %}
+      <td><input type="text"></td>
+      <td><input type="text"></td>
+      <td><input type="text"></td>
+      {% endwith %}</tr>
   </thead>
   <tbody>
     <tr>
-      <td>TEST</td>
+
     </tr>
   </tbody>
   <tfoot>
+    {% for budget in type_results %}
     <tr>
-      <td colspan="2">Праздничные дни</td>
-      <td colspan="18"></td>
+      <td colspan="2">{{ budget }}</td>
+      <td colspan="15"></td>
+      <td><input type="text"></td>
+      <td><input type="text"></td>
+      <td><input type="text"></td>
     </tr>
-    <tr>
-      <td colspan="2">Всего</td>
-      <td colspan="18"></td></tr>
-    <tr>
-      <td colspan="2">Итого</td>
-      <td colspan="18"></td></tr>
+    {% endfor %}
   </tfoot>
 
 </table>
