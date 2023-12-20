@@ -6,7 +6,7 @@
 <table class="main-table">
   <thead class="main-load">
     <tr>
-      <td colspan="20">Педагогическая нагрузка
+      <td colspan="24">Педагогическая нагрузка
       <select id="teacher" class="teacher"></select>
       <select id="education_year" class="education_year"></select>
       </td>
@@ -14,36 +14,43 @@
   </thead>
   <thead class="main-info">
     <tr>
-      <td rowspan="2">№</td>
-      <td rowspan="2">Дисциплина</td>
-      <td rowspan="2">Группа</td>
+      <td rowspan="2">№</td> <!-- autoincrement -->
+      <td rowspan="2">Дисциплина</td> <!-- select -->
+      <td rowspan="2">Группа</td> <!-- select -->
       {% for load in type_load %}
       <td colspan="2">{{ load }}</td>
       {% endfor %}
-      <td>Б</td>
-      <td>В/Б</td>
-      <td>Всего</td>
+      <td rowspan="2">Б</td>
+      <td rowspan="2">В/Б</td>
+      <td rowspan="2">Всего</td>
     </tr>
     <tr>
       {% with ''|center:type_load_length as range %}
       {% for _ in range %}
         <td>1 семестр</td><td>2 семестр</td>
       {% endfor %}
-      <td><input type="text"></td>
-      <td><input type="text"></td>
-      <td><input type="text"></td>
       {% endwith %}</tr>
   </thead>
   <tbody>
     <tr>
-
+      <td><input type="number"></td>
+      <td><select></select></td>
+      <td><select></select></td>
+      {% with ''|center:input_load_semester as range %}
+      {% for _ in range %}
+      <td><input type="number"></td>
+      {% endfor %}
+      {% endwith %}
+      <td><input type="text"></td>
+      <td><input type="text"></td>
+      <td><input type="text"></td>
     </tr>
   </tbody>
   <tfoot>
     {% for budget in type_results %}
     <tr>
       <td colspan="2">{{ budget }}</td>
-      <td colspan="15"></td>
+      <td colspan="19"></td>
       <td><input type="text"></td>
       <td><input type="text"></td>
       <td><input type="text"></td>

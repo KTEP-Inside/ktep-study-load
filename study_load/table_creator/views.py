@@ -11,7 +11,8 @@ def index(request):
         'title': 'Creator',
         'type_load': type_load,
         "type_load_length": n,
-        'type_results': type_results
+        'type_results': type_results,
+        'input_load_semester': n * 2
     }
     add_data()
     return render(request, template_name='table_creator/table_creator.html', context=context)

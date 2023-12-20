@@ -120,14 +120,52 @@ progress::-moz-progress-bar {
 .main-table {
     border: 2px solid;
     border-collapse: collapse;
-    text-align: center;
 }
 
+.main-load td{
+    text-align: left;
+}
+
+.teacher {
+    width: 200px;
+    margin-left: 10px;
+    margin-right: 10px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.education_year{
+	width: 105px;
+	margin-left: 10px;
+	margin-right: 10px;
+	display: inline-block;
+}
+
+
 tr, td {
-    border: 2px solid orange;
+    border: 2px solid black;
     padding: 14px;
+}
+
+td {
+    border: 1px solid black;
+	height: 25px;
+	text-align: center;
+	padding-left: 5px;
+	padding-right: 5px;
+	font-weight: bold;
 }
 
 .main-info, .main-load{
     font-weight: 700;
+}
+
+table input {
+	width: 90%;
+	display: block;
+    margin-left: auto;
+    margin-right: auto;
+	border: none;
+	background-color: #EEEEEE;
+	text-align: center;
 }
