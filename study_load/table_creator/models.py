@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Teacher(models.Model):
@@ -9,6 +10,9 @@ class Teacher(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(viewname='teacher', kwargs={'teacher_id': self.pk})
+
 
 class Subject(models.Model):
     name = models.CharField(unique=True, max_length=100, verbose_name='Предмет')
@@ -18,6 +22,9 @@ class Subject(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse(viewname='subject', kwargs={'subject_id': self.pk})
 
 
 class TeacherHasSubject(models.Model):
@@ -108,7 +115,7 @@ class Course(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.course
+        return f"{self.course}"
 
 
 class SpecialityHasCourse(models.Model):
@@ -121,3 +128,6 @@ class SpecialityHasCourse(models.Model):
 
     def __str__(self):
         return self.name_group
+
+    def get_absolute_url(self):
+        return reverse(viewname='group', kwargs={'course_has_speciality': self.course_has_speciality})
