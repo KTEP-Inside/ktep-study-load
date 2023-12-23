@@ -1,14 +1,20 @@
 {% extends 'table_creator/base.html' %}
 {% block content %}
 {% load my_template_extras %}
+{% load static %}
 
 
 <table class="main-table">
   <thead class="main-load">
     <tr>
       <td colspan="24">Педагогическая нагрузка
-      <select id="teacher" class="teacher"></select>
-      <select id="education_year" class="education_year"></select>
+      <select id="teacher" class="teacher" name="teacher">
+          <option value="" selected disabled></option>
+          {% for teacher in teachers %}
+            <option value="{{ teacher.pk }}">{{ teacher }}</option>
+          {% endfor %}
+      </select>
+      <select id="education_year" class="education_year"></select> <!-- добавить базу с годами, как создавать -->
       </td>
     </tr>
   </thead>
@@ -31,19 +37,23 @@
       {% endfor %}
       {% endwith %}</tr>
   </thead>
-  <tbody>
+  <tbody id="table_body">
     <tr>
       <td><input type="number"></td>
-      <td><select></select></td>
-      <td><select></select></td>
+      <td><select id="subject" class="subject" name="subject">
+      </select></td>
+      <td>
+        <select id="group" class="group" name="group">
+        </select></td>
+
       {% with ''|center:input_load_semester as range %}
-      {% for _ in range %}
-      <td><input type="number"></td>
+      {% for i in range %}
+      <td><input type="text" id="hour" name="hour"></td>
       {% endfor %}
       {% endwith %}
-      <td><input type="text"></td>
-      <td><input type="text"></td>
-      <td><input type="text"></td>
+<!--      <td><input type="text"></td>-->
+<!--      <td><input type="text"></td>-->
+<!--      <td><input type="text"></td>-->
     </tr>
   </tbody>
   <tfoot>
@@ -91,4 +101,15 @@
     </div>
   </form>
 </div>
+<div><input onclick="addLine()" type="button" class="button" value="Добавить строку" id="add_line"></div>
+<div>
+    <input onclick="deleteRow()" type="button" class="button" value="Удалить строку" id="delete_line">
+</div>
+<div>
+    <label for="row_number_input">Номер строки:</label>
+    <input type="number" id="row_number_input">
+</div>
+
+<script src="{% static 'table_creator/js/get_data.js' %}"></script>
+<script src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
 {% endblock %}
