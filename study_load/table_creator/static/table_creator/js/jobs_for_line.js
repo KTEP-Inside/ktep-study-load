@@ -1,3 +1,5 @@
+let typeLoadElements = document.querySelectorAll(".type_load");
+
 function addLine() {
      // Функция, которая создает новую строку в таблице
         let table = document.getElementById('table_body');
@@ -15,11 +17,17 @@ function addLine() {
         cell4.innerHTML = '<select id="group_' + rowCount + '" class="group" name="group_' + rowCount + '"></select>';
         let groupSelect = cell4.querySelector('select');
 
-        // Добавляем ячейки для семестров
-        let semesterRange = 20;
-        for (let i = 0; i < semesterRange; i++) {
-            let cell = row.insertCell(i+3);
-            cell.innerHTML = '<input type="text" id="hour_' + rowCount + '_' + i + '" name="hour_' + rowCount + '_' + i + '">';
+        typeLoadElements.forEach(function(typeLoad){
+            for (let semester = 1; semester < 3; semester++) {
+                let cell = row.insertCell(-1);
+                cell.innerHTML = `<input type="text" id="type-load_${rowCount}_${typeLoad.id}_${semester}"
+                    name="type-load_${rowCount}_${typeLoad.id}_${semester}">`;
+            }
+        });
+
+        for (let i = 0; i < 3; i++) {  // возможно тут
+            let cell = row.insertCell(-1);
+            cell.innerHTML = '<input type="text" id="budget_' + rowCount + '_' + i + '" name="budget_' + rowCount + '_' + i + '">';
         }
 
         updateGroup(groupSelect)
