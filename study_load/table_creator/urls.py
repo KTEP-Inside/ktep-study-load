@@ -1,9 +1,11 @@
 from django.urls import path
 
-from . import views
+from .views import *
 
 urlpatterns = [
-    path('', views.index, name='home'),
-    path('get-groups/<int:teacher_id>/', views.get_groups, name='get_groups'),
-    path('get-subjects/<int:teacher_id>/<int:group_id>/', views.get_subjects, name='get_subjects'),
+    path('', index, name='home'),
+    path('get-groups/<int:teacher_id>/', GetGroupsView.as_view(), name='get_groups'),
+    path('get-subjects/<int:teacher_id>/<int:group_id>/', GetSubjectsView.as_view(), name='get_subjects'),
+    path('get-hours/<int:teacher_id>/<int:group_id>/<int:subject_id>/<int:type_load_id>/', GetStudyLoadHours.as_view(),
+         name='get_hours'),
 ]

@@ -1,6 +1,8 @@
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views import View
+
 from .services import add_data
 from .models import *
 from .utils import *
@@ -22,37 +24,58 @@ def index(request):
     return render(request, template_name='table_creator/table_creator.html', context=context)
 
 
-def get_groups(request, teacher_id):
+class GetGroupsView(View):
 
-    teacher_has_subj = TeacherHasSubject.objects.filter(
-        teacher_id=teacher_id
-    ).values('teacher_has_subject')
+    def get(self, request, teacher_id):
+        teacher_has_subj = TeacherHasSubject.objects.filter(
+            teacher_id=teacher_id
+        ).values('teacher_has_subject')
 
-    group_ids = HoursLoad.objects.filter(
-        teacher_subject_id__in=teacher_has_subj
-    ).values('group_id')
+        group_ids = HoursLoad.objects.filter(
+            teacher_subject_id__in=teacher_has_subj
+        ).values('group_id')
 
-    name_group = SpecialityHasCourse.objects.filter(
-        speciality_id__in=group_ids
-    ).order_by('name_group').values('name_group', 'course_has_speciality')
+        name_group = SpecialityHasCourse.objects.filter(
+            speciality_id__in=group_ids
+        ).order_by('name_group').values('name_group', 'course_has_speciality')
 
-    data = list(name_group)
-    return JsonResponse(data, safe=False)
+        data = tuple(name_group)
+        return JsonResponse(data, safe=False)
 
 
-def get_subjects(request, teacher_id, group_id):
-    hours_load = HoursLoad.objects.filter(
-        group_id=group_id
-    ).values('teacher_subject_id').distinct()
+class GetSubjectsView(View):
+    def get(self, request, teacher_id, group_id):
+        hours_load = HoursLoad.objects.filter(
+            group_id=group_id
+        ).values('teacher_subject_id').distinct()
 
-    subjects_id = TeacherHasSubject.objects.filter(
-        Q(teacher_has_subject__in=hours_load) & Q(teacher_id=teacher_id)
-    ).values('subject_id')
+        subjects_id = TeacherHasSubject.objects.filter(
+            Q(teacher_has_subject__in=hours_load) & Q(teacher_id=teacher_id)
+        ).values('subject_id')
 
-    subjects = Subject.objects.filter(
-        pk__in=subjects_id
-    ).order_by('name').values('pk', 'name')
+        subjects = Subject.objects.filter(
+            pk__in=subjects_id
+        ).order_by('name').values('pk', 'name')
 
-    data = list(subjects)
-    return JsonResponse(data, safe=False)
+        data = tuple(subjects)
+        return JsonResponse(data, safe=False)
 
+
+class GetStudyLoadHours(View):
+
+    def get(self, request, teacher_id, group_id, subject_id, type_load_id):
+
+        teacher_has_subj = TeacherHasSubject.objects.filter(
+            Q(subject_id=subject_id) & Q(teacher_id=teacher_id)
+        ).values('teacher_has_subject')
+
+        hours = HoursLoad.objects.filter(
+            Q(teacher_subject__in=teacher_has_subj) & Q(group_id=group_id) & Q(type_load_id=type_load_id)
+        ).order_by('semester').values('hours', 'exam')
+
+        for i in range(len(hours)):
+            if hours[i]['exam'] is not None:
+                val = Exam.objects.get(pk=hours[i]['exam'])
+                hours[i]['exam'] = val.exam
+        data = tuple(hours)
+        return JsonResponse(data, safe=False)
