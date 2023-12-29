@@ -39,29 +39,15 @@
     </tr>
   </thead>
   <tbody id="table_body">
-    <tr>
-      <td><input type="number"></td>
-      <td><select id="subject" class="subject" name="subject">
-      </select></td>
-      <td>
-        <select id="group" class="group" name="group">
-        </select></td>
-
-      {% with ''|center:input_load_semester as range %}
-      {% for i in range %}
-      <td><input type="text" id="hour" name="hour"></td>
-      {% endfor %}
-      {% endwith %}
-    </tr>
   </tbody>
-  <tfoot>
+  <tfoot id="table_results">
     {% for budget in type_results %}
     <tr>
       <td colspan="2">{{ budget }}</td>
       <td colspan="19"></td>
-      <td><input type="text"></td>
-      <td><input type="text"></td>
-      <td><input type="text"></td>
+      <td><input type="text" id="budget_sum_{{ forloop.counter }}" value="0"></td>
+      <td><input type="text" id="extra_budget_sum_{{ forloop.counter }}" value="0"></td>
+      <td><input type="text" id="budget_result_{{ forloop.counter }}" value="0"></td>
     </tr>
     {% endfor %}
   </tfoot>
@@ -99,7 +85,7 @@
     </div>
   </form>
 </div>
-<div><input onclick="addLine()" type="button" class="button" value="Добавить строку" id="add_line"></div>
+<div><input onclick="addRow()" type="button" class="button" value="Добавить строку" id="add_line"></div>
 <div>
     <input onclick="deleteRow()" type="button" class="button" value="Удалить строку" id="delete_line">
 </div>

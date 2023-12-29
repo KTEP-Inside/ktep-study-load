@@ -1,6 +1,6 @@
 let typeLoadElements = document.querySelectorAll(".type_load");
 
-function addLine() {
+function addRow() {
      // Функция, которая создает новую строку в таблице
         let table = document.getElementById('table_body');
         let rowCount = table.rows.length;
@@ -8,10 +8,11 @@ function addLine() {
 
         // Добавляем ячейки в строку
         let cell1 = row.insertCell(0);
-        cell1.innerHTML = rowCount;
+        rowCount = rowCount + 1;
+        cell1.innerHTML = `<span class="row-number">${rowCount}</span>`;
 
         let cell3 = row.insertCell(1);
-        cell3.innerHTML = '<select id="subject_' + rowCount + '" class="subject" name="subject_' + rowCount + '"></select>';
+        cell3.innerHTML = '<select id="subject_' + rowCount + '" class="subject" name="subject_' + rowCount + '" ></select>';
 
         let cell4 = row.insertCell(2);
         cell4.innerHTML = '<select id="group_' + rowCount + '" class="group" name="group_' + rowCount + '"></select>';
@@ -20,14 +21,15 @@ function addLine() {
         typeLoadElements.forEach(function(typeLoad){
             for (let semester = 1; semester < 3; semester++) {
                 let cell = row.insertCell(-1);
-                cell.innerHTML = `<input type="text" id="type-load_${rowCount}_${typeLoad.id}_${semester}"
-                    name="type-load_${rowCount}_${typeLoad.id}_${semester}">`;
+                cell.innerHTML = `<input type="text" id="type-load_${rowCount}_${typeLoad.id}_${semester}" value="0"
+                    name="type-load_${rowCount}_${typeLoad.id}_${semester}" class="data-element" disabled>`;
             }
         });
 
-        for (let i = 0; i < 3; i++) {  // возможно тут
+        for (let i = 0; i < 3; i++) { 
             let cell = row.insertCell(-1);
-            cell.innerHTML = '<input type="text" id="budget_' + rowCount + '_' + i + '" name="budget_' + rowCount + '_' + i + '">';
+            cell.innerHTML = '<input type="text" id="budget_' + i + '_' + rowCount + '" name="budget_' + i + '_' + rowCount + '" value="0" disabled />';
+
         }
 
         updateGroup(groupSelect)
@@ -39,35 +41,52 @@ function deleteRow() {
     let rowNumberInput = document.getElementById('row_number_input');
     let rowDelete = parseInt(rowNumberInput.value, 10);
 
-    if (!isNaN(rowDelete) && rowDelete >= 0 && rowDelete < table.rows.length) {
-        table.deleteRow(rowDelete);
+    if (!isNaN(rowDelete) && rowDelete >= 0 && rowDelete <= table.rows.length) {
+        table.deleteRow(rowDelete - 1);
 
         // Пересчитываем оставшиеся строки
-        for (let i = rowDelete; i < table.rows.length; i++) {
-            let cells = table.rows[i].cells;
+        for (let i = rowDelete - 1; i < table.rows.length; i++) {
 
+            
+            let cells = table.rows[i].cells;
+            let rowNum = i + 1;
             // Пересчитываем номер в первой ячейке (например, номер строки)
-            cells[0].innerHTML = i;
+            cells[0].innerHTML = `<span class="row-number">${rowNum}</span>`;
 
             // Обновляем id у элементов в ячейках
-            cells[1].getElementsByTagName('select')[0].id = 'subject_' + i;
-            cells[1].getElementsByTagName('select')[0].name = 'subject_' + i;
+            cells[1].getElementsByTagName('select')[0].id = 'subject_' + rowNum;
+            cells[1].getElementsByTagName('select')[0].name = 'subject_' + rowNum;
 
-            cells[2].getElementsByTagName('select')[0].id = 'group_' + i;
-            cells[2].getElementsByTagName('select')[0].name = 'group_' + i;
+            cells[2].getElementsByTagName('select')[0].id = 'group_' + rowNum;
+            cells[2].getElementsByTagName('select')[0].name = 'group_' + rowNum;
+            
+            let indx = 3
+            typeLoadElements.forEach(function(typeLoad){
+                for (let semester = 1; semester < 3; semester++) {
+                        let inputElement = cells[indx].getElementsByTagName('input')[0];
+                        let inputId = `type-load_${rowNum}_${typeLoad.id}_${semester}`;
+                        inputElement.id = inputId;
+                        inputElement.name = inputId;
 
-            // Дополнительные ячейки с идентификаторами вида "hour_1_2" и т.д.
-            for (let j = 3; j < cells.length; j++) {
-                cells[j].getElementsByTagName('input')[0].id = 'hour_' + i + '_' + (j - 3);
-                cells[j].getElementsByTagName('input')[0].name = 'hour_' + i + '_' + (j - 3);
+                        indx++;
+                    }
+            });
+            
+            let last = indx + 3;
+            let k = 0;
+            for (indx; indx < last; indx++) {
+                cells[indx].getElementsByTagName('input')[0].id = `budget_${k}_${rowNum}`;
+                cells[indx].getElementsByTagName('input')[0].name = `budget_${k}_${rowNum}`;
+                k++;
             }
+            
         }
     } else {
         alert('Недопустимый номер строки или такой строки не существует.');
     }
 }
 
-   function updateGroup(cur_row) {
+    function updateGroup(cur_row) {
        let teacherSelect = document.getElementById('teacher');
        let selectedTeacherId = teacherSelect.value;
        // Очищаем текущие опции и добавляем по умолчанию пустой вариант
