@@ -17,6 +17,7 @@ class Teacher(models.Model):
 class Subject(models.Model):
     name = models.CharField(unique=True, max_length=100, verbose_name='Предмет')
     teachers = models.ManyToManyField(Teacher, through='TeacherHasSubject')
+    is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
     objects = models.Manager()
 
@@ -46,6 +47,9 @@ class TypeLoad(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse(viewname='type_load', kwargs={'type_load_id': self.pk})
 
 
 class Semester(models.Model):
@@ -80,7 +84,7 @@ class HoursLoad(models.Model):
     type_load = models.ForeignKey(TypeLoad, on_delete=models.CASCADE)
     group = models.ForeignKey('SpecialityHasCourse', on_delete=models.CASCADE)
     teacher_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)  # как взять ДЗ и Э
+    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)
     exam = models.ForeignKey(Exam, on_delete=models.SET_NULL, null=True)
 
     objects = models.Manager()
@@ -123,6 +127,7 @@ class SpecialityHasCourse(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
     name_group = models.CharField(unique=True, max_length=50)
+    is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
     objects = models.Manager()
 

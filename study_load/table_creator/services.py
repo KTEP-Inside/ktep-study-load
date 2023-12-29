@@ -4,27 +4,41 @@ from openpyxl.worksheet.worksheet import Worksheet
 from .models import *
 
 
-def create_group(ws: Worksheet) -> SpecialityHasCourse:
+def create_group(ws: Worksheet):
     """Специальность, группа и курс"""
-    speciality = ws['A4'].value.split()[3].strip()
-    name_group = ' '.join(ws['A4'].value.split()[3:])
+    try:
+        speciality = ws['A4'].value.split()[3].strip()
+        name_group = ' '.join(ws['A4'].value.split()[3:])
+    except AttributeError:
+        return 'Неверный шаблон'
+
+    is_paid = False
+    if ws['A4'].value.split()[-2][-1] == 'п':
+        is_paid = True
 
     num_course = Course.objects.get(pk=int(ws.title[0]))
     speciality_obj, created = Speciality.objects.get_or_create(name=speciality)  # специальность
     group, created = SpecialityHasCourse.objects.get_or_create(course=num_course,
                                                                speciality=speciality_obj,  # группы
-                                                               name_group=name_group)
-    return group
+                                                               name_group=name_group,
+                                                               is_paid=is_paid)
+    return group, is_paid
 
 
 def create_table(ws: Worksheet,
                  subject: Cell,
                  teachers: Cell,
-                 group: SpecialityHasCourse):
+                 group: SpecialityHasCourse,
+                 is_paid: bool):
     """Препод и предмет, идём далее"""
+
+    if teachers.value is not None:
+        if teachers.value.title() in ('Всего', 'Итого') and not is_paid:
+            is_paid = True
+
     if teachers.value is not None and subject.value is not None:
 
-        subject_obj, created = Subject.objects.get_or_create(name=subject.value.strip())
+        subject_obj, created = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=is_paid)
 
         for teacher in teachers.value.split(','):
             teacher_obj, created = Teacher.objects.get_or_create(name=teacher)
@@ -118,20 +132,20 @@ def create_load(cur_cell: str | int | float,
 def main_func(ws: Worksheet):
     """Основной скрипт получения данных с excel"""
 
-    group = create_group(ws)
+    group, is_paid = create_group(ws)
 
     # получаем преподавателей + их предмет
     for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=8):
-        create_table(ws, subject=subject, teachers=teachers, group=group)
+        create_table(ws, subject=subject, teachers=teachers, group=group, is_paid=is_paid)
 
 
 def add_data():
-    # wb = openpyxl.load_workbook(filename=r'C:\Users\user\PycharmProjects\ktep-study-load\study_load\table_creator\ИСиПы+ 2023-2024.xlsx')
-    wb = openpyxl.load_workbook(
-        filename='/home/mamba/PycharmProjects/ktep-study-load/study_load/table_creator/шаблон РУП 2024-2025.xlsx')
+    wb = openpyxl.load_workbook(filename=r'C:\Users\user\PycharmProjects\ktep-study-load\study_load\table_creator\шаблон РУП 2024-2025.xlsx')
+    # wb = openpyxl.load_workbook(
+    #     filename='/home/mamba/PycharmProjects/ktep-study-load/study_load/table_creator/шаблон РУП 2024-2025.xlsx')
     all_sheets = wb.sheetnames
     for sheet_id, _ in enumerate(all_sheets):
         ws = wb.worksheets[sheet_id]
-        main_func(ws)
-
-add_data()
+#         main_func(ws)
+#
+# add_data()
