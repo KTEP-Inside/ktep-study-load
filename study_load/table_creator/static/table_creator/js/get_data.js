@@ -1,25 +1,44 @@
 document.addEventListener('DOMContentLoaded', function() {
+    
     let teacherSelect = document.getElementById('teacher');
     let mainTable = document.getElementById('table_body');
-
+    let typeLoadElements = document.querySelectorAll(".type_load");
+    let tableResults = document.getElementById('table_results');
 
     teacherSelect.addEventListener('input', updateGroups);
 
-    mainTable.addEventListener('input', function () {
-        let groupElements = document.querySelectorAll('.group');
-        let subjectElements = document.querySelectorAll('.subject');
+    mainTable.addEventListener('input', function (event) {
+        const target = event.target;
 
-        groupElements.forEach(function (groupElement) {
-            // Перед добавлением слушателя сначала удаляем существующие слушатели,
-            // чтобы избежать множественного добавления
-            groupElement.removeEventListener('change', onGroupElementChange);
-            groupElement.addEventListener('change', onGroupElementChange);
-        });
+        // Проверяем, является ли элемент с классом 'group'
+        if (target.classList.contains('group')) {
+            onGroupElementChange.call(target, event);
+        } 
+        // Проверяем, является ли элемент с классом 'subject'
+        else if (target.classList.contains('subject')) {
+            onSubjectElementChange.call(target, event);
+        } 
+    });
 
-        subjectElements.forEach(function (subjectElement) {
-            subjectElement.removeEventListener('change', onSubjectElementChange);
-            subjectElement.addEventListener('change', onSubjectElementChange);
-        });
+    mainTable.addEventListener('focusout', function (event) {
+        const target = event.target;
+        // Проверяем, является ли элемент с классом 'data-element'
+        if (target.classList.contains('data-element')) {
+            // Проверяем, было ли изменено значение ячейки
+            if (target.value >= 0 && target.value !== target.dataset.previousValue) {
+                // Извлекаем номер строки из ID
+                let row = target.id;
+                let regex = /(\d+)/g;
+                let matches = row.match(regex);
+                let rowid = matches[0];
+
+                // Вызываем onChangeHours с параметром rowid при событии blur
+                onChangeHours.call(target, rowid, event);
+
+                // Обновляем предыдущее значение
+                target.dataset.previousValue = target.value;
+            } 
+        }
     });
 
     function updateGroups() {
@@ -27,8 +46,31 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupElements = document.querySelectorAll('.group');
         let subjectElements = document.querySelectorAll('.subject');
 
+        if (mainTable.rows.length >= 1) {
+            for (let rowIdx = 0; rowIdx < mainTable.rows.length; rowIdx++) {
+
+                let row = mainTable.rows[rowIdx];
+                let cells = row.cells;
+                let last = typeLoadElements.length * 2 + 3 + 3;
+
+                for (let j = 3; j < last; j++) {
+                    cells[j].getElementsByTagName('input')[0].value = 0;
+                }
+            }
+            for (let rowIdx = 0; rowIdx < tableResults.rows.length; rowIdx++) {
+                let row = tableResults.rows[rowIdx];
+                let cells = row.cells;
+    
+                for (let j = 2; j < 5; j++) {
+                    cells[j].getElementsByTagName('input')[0].value = 0;
+                }
+            }
+        };
+
+
         subjectElements.forEach(function(subjectElement) {
              subjectElement.innerHTML = '<option value="" selected disabled></option>';
+             subjectElement.disabled = true;
         });
 
         groupElements.forEach(function(groupElement) {
@@ -56,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function onGroupElementChange() {
         let selectedTeacherId = teacherSelect.value;
         let selectedGroupId = this.value;
-
         let subjectId = 'subject_' + this.id.split('_')[1];
         let subjectElement = document.getElementById(subjectId);
 
@@ -68,9 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 let option = document.createElement('option');
                 option.value = subject.pk;
                 option.text = subject.name;
+                option.setAttribute('data-is-paid', subject.is_paid);
 
                 subjectElement.add(option);
             });
+            subjectElement.disabled = false;
         })
         .catch(error => {
             console.error('Error fetching subjects:', error);
@@ -86,36 +129,103 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupId = `group_${rowId}`;
         let selectedGroupId = document.getElementById(groupId).value;
 
-        typeLoadElements.forEach(function(typeLoad){
-
-            fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
-            .then(response => response.json())
-            .then(data => {
-                let semester = 1;
-                
-                data.forEach(function(hour_load) {
-
-                    let semesterVal = 0
-                    if (hour_load.hours !== null) {
-                        semesterVal = hour_load.hours;
-                    } else {
-                        semesterVal = hour_load.exam;
-                    }
-                    
-                    let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
-                    document.getElementById(semesterId).value = semesterVal;
-                    console.log()
-                    
-                    semester++;
-                    
+        let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
+            return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
+                .then(response => response.json())
+                .then(data => {
+                    let semester = 1;
+                    data.forEach(function(hour_load) {
+                        let semesterVal = 0;
+                        if (hour_load.hours !== null) {
+                            semesterVal = hour_load.hours;
+                        } else {
+                            semesterVal = hour_load.exam;
+                        }
+                        let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
+                        document.getElementById(semesterId).value = semesterVal;
+                        document.getElementById(semesterId).disabled = false;
+                        semester++;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching subjects:', error);
                 });
-            })
-            .catch(error => {
-                console.error('Error fetching subjects:', error);
-            });
         });
-
-
+        
+        Promise.all(fetchPromises)
+            .then(() => {
+                let budget_sum = createCurrentBudget(rowId - 1);
+                setCurrentBudget(rowId - 1, budget_sum);
+        });
     };
+
+    function onChangeHours(curRowId) {
+        let budget_sum = createCurrentBudget(curRowId-1);
+        setCurrentBudget(curRowId-1, budget_sum);
+        
+    }
+
+    function createCurrentBudget(rowId) { 
+        let budget_sum = 0;
+        let cells = mainTable.rows[rowId].cells;
+        for (i = 3; i < typeLoadElements.length * 2 + 3; i++) {
+            
+            let num = parseInt(cells[i].getElementsByTagName('input')[0].value);
+            if (!isNaN(num)) {
+                budget_sum += num;
+            }
+        }
+        return budget_sum;
+    }
+        
+    function setCurrentBudget(rowId, budget_sum) {
+        
+        let cells = mainTable.rows[rowId].cells;
+        let selectedOption = cells[1].getElementsByTagName('select')[0].querySelector('option:checked');
+        let dataIsPaidValue = selectedOption.getAttribute('data-is-paid');
+        
+        if (dataIsPaidValue === 'true') {
+            document.getElementById(`budget_0_${rowId+1}`).value = 0;
+            document.getElementById(`budget_1_${rowId+1}`).value = budget_sum;
+        } else {
+            document.getElementById(`budget_0_${rowId+1}`).value = budget_sum;
+            document.getElementById(`budget_1_${rowId+1}`).value = 0;
+        }
+
+        document.getElementById(`budget_2_${rowId+1}`).value = budget_sum;
+        changeResults(dataIsPaidValue);
+    }
+    
+
+    function changeResults(is_paid) {
+        let newBudget = 0;
+        let newExtraBudget = 0;
+        let newTotalBudget = 0;
+
+        if (is_paid === 'true') {
+            let extraBudgetElements = document.querySelectorAll('[id^="budget_1_"]');
+            extraBudgetElements.forEach(function(element) {
+                newExtraBudget += parseInt(element.value);
+            });
+            document.getElementById('extra_budget_sum_1').value = newExtraBudget;
+            document.getElementById('extra_budget_sum_3').value = newExtraBudget;
+        } else {
+
+            let budgetElements = document.querySelectorAll('[id^="budget_0_"]');
+            budgetElements.forEach(function(element) {
+                newBudget += parseInt(element.value);
+            });
+            document.getElementById('budget_sum_1').value = newBudget;
+            document.getElementById('budget_sum_3').value = newBudget;
+        }
+        let totalBudgetElements = document.querySelectorAll('[id^="budget_2_"]');
+        totalBudgetElements.forEach(function(element) {
+            newTotalBudget += parseInt(element.value);
+        });
+        document.getElementById('budget_result_1').value = newTotalBudget;
+        document.getElementById('budget_result_3').value = newTotalBudget;
+    }
+    
 });
 
+ 
