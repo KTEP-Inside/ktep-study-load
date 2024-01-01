@@ -1,9 +1,9 @@
 {% extends 'table_creator/base.html' %}
-{% block content %}
+
 {% load my_template_extras %}
 {% load static %}
 
-
+{% block content %}
 <table class="main-table">
   <thead class="main-load">
     <tr>
@@ -19,10 +19,10 @@
     </tr>
   </thead>
   <thead class="main-info">
-    <tr>
-      <td rowspan="2">№</td> <!-- autoincrement -->
-      <td rowspan="2">Дисциплина</td> <!-- select -->
-      <td rowspan="2">Группа</td> <!-- select -->
+    <tr class="type-load-colums">
+      <td rowspan="2">№</td>
+      <td rowspan="2">Дисциплина</td>
+      <td rowspan="2">Группа</td>
       {% for load in type_load %}
       <td class="type_load" colspan="2" id="{{ load.pk }}">{{ load }}</td>
       {% endfor %}
@@ -51,9 +51,9 @@
     </tr>
     {% endfor %}
   </tfoot>
-
 </table>
 <div>С нагрузкой ознакомлен, не возражаю ___________________________</div>
+
 <div class="demo-wrapper">
   <form
     class="form-upload"
@@ -85,13 +85,16 @@
     </div>
   </form>
 </div>
-<div><input onclick="addRow()" type="button" class="button" value="Добавить строку" id="add_line"></div>
+
+<div class="buttons-menu">
+<div><input type="button" class="button" value="Добавить строку" id="add_row"></div>
 <div>
-    <input onclick="deleteRow()" type="button" class="button" value="Удалить строку" id="delete_line">
+    <input type="button" class="button" value="Удалить строку" id="delete_row">
 </div>
 <div>
     <label for="row_number_input">Номер строки:</label>
     <input type="number" id="row_number_input">
+</div>
 </div>
 
 <script src="{% static 'table_creator/js/get_data.js' %}"></script>

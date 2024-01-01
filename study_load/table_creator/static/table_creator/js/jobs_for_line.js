@@ -42,7 +42,16 @@ function deleteRow() {
     let rowDelete = parseInt(rowNumberInput.value, 10);
 
     if (!isNaN(rowDelete) && rowDelete >= 0 && rowDelete <= table.rows.length) {
+        let curDelRow = table.rows[rowDelete - 1].cells
+
+        let budget = curDelRow[curDelRow.length - 1].getElementsByTagName('input')[0].value;
+        let extraBudget = curDelRow[curDelRow.length - 2].getElementsByTagName('input')[0].value;
+        let totalBudget = curDelRow[curDelRow.length - 3].getElementsByTagName('input')[0].value;
+        
+        deductFromBudget(budget, extraBudget, totalBudget);
+
         table.deleteRow(rowDelete - 1);
+
 
         // Пересчитываем оставшиеся строки
         for (let i = rowDelete - 1; i < table.rows.length; i++) {
@@ -113,3 +122,26 @@ function deleteRow() {
             cur_row.disabled = true;
         }
 }
+
+function deductFromBudget(budget, extraBudget, totalBudget) {
+    document.getElementById('extra_budget_sum_1').value -= extraBudget;
+    document.getElementById('extra_budget_sum_3').value -= extraBudget;
+    document.getElementById('budget_sum_1').value -= budget;
+    document.getElementById('budget_sum_3').value -= budget;
+    document.getElementById('budget_result_1').value -= totalBudget;
+    document.getElementById('budget_result_3').value -= totalBudget;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    let buttonAddRow = document.getElementById('add_row');
+    let buttonDeleteRow = document.getElementById('delete_row');
+
+    buttonAddRow.addEventListener('click', function() {
+        addRow();
+    })
+
+    buttonDeleteRow.addEventListener('click', function() {
+        deleteRow();
+    })
+
+});

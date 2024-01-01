@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('budget_result_1').value = newTotalBudget;
         document.getElementById('budget_result_3').value = newTotalBudget;
     }
+
     
 });
 

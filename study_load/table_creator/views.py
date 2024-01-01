@@ -77,6 +77,7 @@ class GetStudyLoadHoursView(View):
             if hours[i]['exam'] is not None:
                 val = Exam.objects.get(pk=hours[i]['exam'])
                 hours[i]['exam'] = val.exam
+
         data = tuple(hours)
         return JsonResponse(data, safe=False)
 
