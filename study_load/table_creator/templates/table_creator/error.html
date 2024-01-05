@@ -1,0 +1,16 @@
+{% extends 'table_creator/base.html' %}
+
+{% load my_template_extras %}
+{% load static %}
+
+{% block content %}
+<div class="answer-message">
+    <h1 class="error-title message-title">Ошибка</h1>
+    <p class="answer-text">Произошла ошибка во время загрузки содержимого файла.
+    <br>Возможно, файл не соответствует шаблону
+    </p>
+    <a href="{% url 'home' %}" class="home-button">На главную</a>
+</div>
+
+
+{% endblock %}

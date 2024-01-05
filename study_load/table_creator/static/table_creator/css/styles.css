@@ -7,13 +7,8 @@ body {
 
 
 .main-table {
-    border: 2px solid;
-    border-collapse: collapse;
-    
-}
-
-.main-load td{
-    text-align: left;
+  border: 2px solid;
+  border-collapse: collapse;
 }
 
 .teacher {
@@ -37,13 +32,17 @@ tr td{
 }
 
 td {
-	height: 25px;
+	height: 20px;
 	text-align: center;
-	padding-left: 5px;
-	padding-right: 5px;
 	font-weight: bold;
-  padding: 10px; /* */
+  /* padding: 10px; */
 }
+
+.main-load td{
+  text-align: left;
+
+}
+
 
 .main-info, .main-load{
   font-weight: 700;
@@ -63,6 +62,7 @@ table input {
 .subject {
   width: 150px;
 }
+
 
 select{
   font-family: inherit;
@@ -87,6 +87,54 @@ option {
   font-size: inherit;
   font-weight: bold;
 }
+
+@media print {
+
+  .budget {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .semester {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .buttons-menu {
+    display: none;
+  }
+
+  .demo-wrapper {
+    display: none;
+  }
+
+  .print-button {
+    display: none;
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+  
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 10px; /* Добавляем дополнительное пространство справа, чтобы текст не налазил на галочку (по необходимости) */
+    background: transparent; /* Прозрачный фон */
+    border: none; /* Убираем рамку */
+  }
+  
+  /* Добавляем кастомный стиль для Firefox */
+  @-moz-document url-prefix() {
+    select {
+      padding-right: 10px; /* Добавляем дополнительное пространство справа, чтобы текст не налазил на галочку (по необходимости) */
+      background: transparent; /* Прозрачный фон */
+      border: none; /* Убираем рамку */
+    }
+  }
+}
+
+
 
 
 
@@ -135,7 +183,6 @@ option {
 
 #uploadForm_File,
 .form-upload__submit,
-progress,
 .form-upload__container {
   width: 360px;
 }
@@ -157,7 +204,7 @@ progress,
   background-color: #FFFFFF;
   cursor: pointer;
   transition: background-color 0.2s linear;
-}
+} 
 
 .form-upload__submit:focus-visible {
   border: 2px solid #ffffff;
@@ -170,39 +217,54 @@ progress,
 }
 
 .form-upload__submit_orange {
-  background-color: orange;
+  background-color: #ffab40;
+}
+/* success and error pages */
+
+.answer-message {
+  display: flex;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex-wrap: wrap;
+  justify-content: flex-start;;
 }
 
-progress {
-  height: 5px;
-  margin-top: 25px;
-  border: none;
-  background-color: #286C2D;
+.message-title {
+  font-size: 70px;
+  height: 20px;
+}
+.error-title {
+  color: red;
 }
 
-progress::-webkit-progress-bar {
-  border: none;
-  background-color: #286C2D;
+.success-title {
+  color: greenyellow;
 }
 
-progress::-webkit-progress-value {
-  background-color: #41E847;
+.answer-text {
+  font-size: 60px;
+  
 }
 
-progress::-moz-progress-bar {
-  border: none;
-  background-color: #41E847;
+
+.home-button {
+  text-decoration: none;
+  border: 2px solid #ffab40;
+  background-color: #ffab40;
+  border-radius: 8px;
+  font-size: 40px;
+  color: #000000;
+  display: flex;
+  width: 250px;
+  height: 70px;
+  justify-content: center;
+  align-items: center;
+  
 }
 
-.form-upload__container {
-  margin-top: 10px;
-  font-size: 16px;
-}
-
-.form-upload__status:empty::before {
-  content: "Не загружено";
-}
-
-.form-upload__status:empty + span {
-  display: none;
+.answer-message > .home-button {
+  margin: 0 auto;
+  text-align: center;
 }

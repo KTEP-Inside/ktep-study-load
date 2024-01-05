@@ -1,0 +1,14 @@
+{% extends 'table_creator/base.html' %}
+
+{% load my_template_extras %}
+{% load static %}
+
+{% block content %}
+<div class="answer-message">
+    <h1 class="success-title message-title">Успешно</h1>
+    <p class="answer-text">Содержимое вашего файла успешно загружен!</p>
+    <a href="{% url 'home' %}" class="home-button">На главную</a>
+</div>
+
+
+{% endblock %}
