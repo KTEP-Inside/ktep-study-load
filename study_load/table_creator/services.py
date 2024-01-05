@@ -139,13 +139,9 @@ def main_func(ws: Worksheet):
         create_table(ws, subject=subject, teachers=teachers, group=group, is_paid=is_paid)
 
 
-def add_data():
-    wb = openpyxl.load_workbook(filename=r'C:\Users\user\PycharmProjects\ktep-study-load\study_load\table_creator\шаблон РУП 2024-2025.xlsx')
-    # wb = openpyxl.load_workbook(
-    #     filename='/home/mamba/PycharmProjects/ktep-study-load/study_load/table_creator/шаблон РУП 2024-2025.xlsx')
+def add_data(file):
+    wb = openpyxl.load_workbook(file)
     all_sheets = wb.sheetnames
     for sheet_id, _ in enumerate(all_sheets):
         ws = wb.worksheets[sheet_id]
-#         main_func(ws)
-#
-# add_data()
+        main_func(ws)

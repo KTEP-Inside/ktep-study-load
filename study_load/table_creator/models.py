@@ -95,6 +95,9 @@ class HoursLoad(models.Model):
         else:
             return f"{self.type_load} {self.group} {self.teacher_subject} {self.hours}"
 
+    class Meta:
+        unique_together = ['semester', 'type_load', 'group', 'teacher_subject']
+
 
 class Speciality(models.Model):
     name = models.CharField(unique=True, max_length=15, verbose_name='Специальность')
