@@ -1,14 +1,18 @@
+import json
+
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
 from django.views import View
 
 from .services import add_data
 from .models import *
 from .utils import *
+from .validators import *
 
 
-def index(request):
+def index(request):  # class + try
     type_load = TypeLoad.objects.all()
     teachers = Teacher.objects.all().order_by("name")
     n = len(type_load)
@@ -24,7 +28,7 @@ def index(request):
     return render(request, template_name='table_creator/table_creator.html', context=context)
 
 
-class GetGroupsView(View):
+class GetGroupsView(View):  # try
 
     def get(self, request, teacher_id):
         teacher_has_subj = TeacherHasSubject.objects.filter(
@@ -43,7 +47,7 @@ class GetGroupsView(View):
         return JsonResponse(data, safe=False)
 
 
-class GetSubjectsView(View):
+class GetSubjectsView(View):  # try
     def get(self, request, teacher_id, group_id):
         hours_load = HoursLoad.objects.filter(
             group_id=group_id
@@ -61,7 +65,7 @@ class GetSubjectsView(View):
         return JsonResponse(data, safe=False)
 
 
-class GetStudyLoadHoursView(View):
+class GetStudyLoadHoursView(View):  # try
 
     def get(self, request, teacher_id, group_id, subject_id, type_load_id):
 
@@ -81,3 +85,96 @@ class GetStudyLoadHoursView(View):
         data = tuple(hours)
         return JsonResponse(data, safe=False)
 
+
+class ExcelFileUploadView(View):
+
+    def post(self, request, *args, **kwargs):
+
+        if 'file_name' in request.FILES:
+            uploaded_file = request.FILES['file_name']
+            try:
+                add_data(uploaded_file)
+                return redirect('upload-success')
+
+            except:
+                return redirect('upload-error')
+
+        return redirect('upload-error')
+
+
+class UpdateHoursView(View):
+
+    @staticmethod
+    def _set_exam_or_hours(obj, exam=None, hours=None):
+        obj.exam = exam
+        obj.hours = hours
+        obj.save()
+
+    @staticmethod
+    def _get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id):
+        teacher_has_subj = TeacherHasSubject.objects.filter(
+            Q(subject_id=subject_id) & Q(teacher_id=teacher_id)
+        ).values('teacher_has_subject')
+
+        prev_val = 0
+        try:
+            obj = HoursLoad.objects.get(
+                teacher_subject_id__in=teacher_has_subj, semester_id=semester_id, group_id=group_id,
+                type_load_id=type_load_id)
+
+            if obj.hours is None:
+                prev_val = obj.exam
+            elif obj.exam is None:
+                prev_val = obj.hours
+
+        except ObjectDoesNotExist:
+            prev_val = 0
+        except MultipleObjectsReturned:
+            prev_val = 0
+
+        return prev_val
+
+    def _update_hours_load(self, teacher_has_subj, semester_id, group_id, type_load_id, val):
+        hours_load, created = HoursLoad.objects.get_or_create(
+            teacher_subject_id=teacher_has_subj,
+            semester_id=semester_id,
+            group_id=group_id,
+            type_load_id=type_load_id
+        )
+
+        if val in exams_type:
+            exam = Exam.objects.get(exam=val)
+            self._set_exam_or_hours(hours_load if hours_load else created, exam=exam)
+        elif val.isdigit():
+            val = int(val)
+            self._set_exam_or_hours(hours_load if hours_load else created, hours=val)
+
+    def post(self, request, teacher_id, group_id, subject_id, type_load_id, semester_id):
+        try:
+            val = json.loads(request.body)['val']
+            validate_val(val)
+
+            teacher_has_subj = TeacherHasSubject.objects.get(
+                subject_id=subject_id, teacher_id=teacher_id)
+            teacher_has_subj = teacher_has_subj.teacher_has_subject
+
+            self._update_hours_load(teacher_has_subj, semester_id, group_id, type_load_id, val)
+
+            return JsonResponse({'status': 'success', 'message': 'Успешно'})
+
+        except ValidationError as validation_error:
+            prev_val = self._get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id)
+            return JsonResponse(
+                {'status': 'validation-error', 'message': str(validation_error.message), 'data': prev_val})
+
+        except Exception as e:
+            prev_val = self._get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id)
+            return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
+
+
+def success(request):
+    return render(request, 'table_creator/success.html', {'title': 'Успешно'})
+
+
+def error(request):
+    return render(request, 'table_creator/error.html', {'title': 'Ошибка'})

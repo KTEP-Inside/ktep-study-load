@@ -23,23 +23,80 @@ document.addEventListener('DOMContentLoaded', function() {
     mainTable.addEventListener('focusout', function (event) {
         const target = event.target;
         // Проверяем, является ли элемент с классом 'data-element'
-        if (target.classList.contains('data-element')) {
-            // Проверяем, было ли изменено значение ячейки
-            if (target.value >= 0 && target.value !== target.dataset.previousValue) {
-                // Извлекаем номер строки из ID
-                let row = target.id;
-                let regex = /(\d+)/g;
-                let matches = row.match(regex);
-                let rowid = matches[0];
+        if (target.classList.contains('data-element')) {   
+            
+            // Извлекаем номер строки из ID
+            let row = target.id;
+            
+            let regex = /(\d+)/g;
+            let matches = row.match(regex);
+            let rowid = matches[0];
+            let prevVal = document.getElementById(row).value
 
-                // Вызываем onChangeHours с параметром rowid при событии blur
-                onChangeHours.call(target, rowid, event);
+            
+            // вызов отправки данных django
+            let teacherSelect = document.getElementById('teacher').value;
+            let groupSelect = document.getElementById(`group_${rowid}`).value;
+            let subjectSelect = document.getElementById(`subject_${rowid}`).value;
+            let semesterSelect = row[row.length - 1];
+            let typeLoadSelect = row[row.length - 3];
 
-                // Обновляем предыдущее значение
-                target.dataset.previousValue = target.value;
-            } 
+            let url = `update-hours/${teacherSelect}/${groupSelect}/${subjectSelect}/${typeLoadSelect}/${semesterSelect}/`
+
+            let data = {
+                val: prevVal
+            }
+            console.log(data);
+            let requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(data)
+            }
+            
+            fetch(url, requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                throw new Error('Ошибка соединения');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                if (data.status == 'success') {
+                    onChangeHours.call(target, rowid, event);
+                    
+                } else if (data.status == 'validation-error') {
+                    alert(data.message);
+                    document.getElementById(row).value = data.data;
+                } else {
+                    document.getElementById(row).value = data.data;
+                }
+
+            })
+            .catch(error => console.error('Error:', error));
+
+            
         }
     });
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Ищем куку с нужным именем
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
     function updateGroups() {
         let selectedTeacherId = teacherSelect.value;
@@ -129,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupId = `group_${rowId}`;
         let selectedGroupId = document.getElementById(groupId).value;
 
+        // оптимизировать
         let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
             return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
                 .then(response => response.json())
@@ -146,6 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById(semesterId).disabled = false;
                         semester++;
                     });
+                // for (let i = 1; i < 3; i++) {
+                //     let semesterId = `type-load_${rowId}_${typeLoad.id}_${i}`;
+                //     document.getElementById(semesterId).disabled = false;
+                // }
                 })
                 .catch(error => {
                     console.error('Error fetching subjects:', error);
