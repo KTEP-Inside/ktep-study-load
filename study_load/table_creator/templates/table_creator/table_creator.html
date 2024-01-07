@@ -1,7 +1,8 @@
-{% extends 'table_creator/base.html' %}
-
-{% load my_template_extras %}
+{% extends 'base.html' %}
 {% load static %}
+{% load table_creator_extras %}
+
+{% block title %} Главная {% endblock %}
 
 {% block content %}
 
@@ -53,7 +54,7 @@
     {% endfor %}
   </tfoot>
 </table>
-<div>С нагрузкой ознакомлен, не возражаю ___________________________</div>
+<div class="sign">С нагрузкой ознакомлен, не возражаю ___________________________</div>
 
 <div class="demo-wrapper">
   <form
@@ -85,16 +86,15 @@
 
 <div class="buttons-menu">
 <div><input type="button" class="button" value="Добавить строку" id="add_row"></div>
-<div>
-    <input type="button" class="button" value="Удалить строку" id="delete_row">
+<div class="delete-row-menu">
+    <input type="button" class="button" value="Удалить строку" id="delete_row" >
+    <label for="row_number_input" class="delete-row-element">Номер строки:</label>
+    <input type="number" id="row_number_input"  class="delete-row-element delete-row-input">
 </div>
-<div>
-    <label for="row_number_input">Номер строки:</label>
-    <input type="number" id="row_number_input">
-</div>
-<div class="print-button"><a href="javascript:window.print();">Печатать</a></div>
+<div><button class="button" id="print-button">Печать</button></div>
 </div>
 
+<script src="{% static 'table_creator/js/print.js' %}"></script>
 <script src="{% static 'table_creator/js/get_data.js' %}"></script>
 <script src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
 {% endblock %}

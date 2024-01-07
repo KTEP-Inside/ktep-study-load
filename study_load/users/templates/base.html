@@ -1,11 +1,11 @@
-<!DOCTYPE html>
 {% load static %}
 {% load table_creator_extras %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{title}}</title>
-    <link type="text/css" href="{% static 'table_creator/css/styles.css' %}" rel="stylesheet">
+    <title>{% block title %}{% endblock %}</title>
+    <link type="text/css" href="{% static 'users/css/styles.css' %}" rel="stylesheet">
 </head>
 <body>
     {% block content %}

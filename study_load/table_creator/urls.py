@@ -13,5 +13,4 @@ urlpatterns = [
          UpdateHoursView.as_view(), name='update-hours'),
     path('upload-success/', success, name='upload-success'),
     path('upload-error/', error, name='upload-error'),
-
 ]

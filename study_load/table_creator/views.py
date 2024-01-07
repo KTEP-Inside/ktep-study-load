@@ -17,7 +17,6 @@ def index(request):  # class + try
     teachers = Teacher.objects.all().order_by("name")
     n = len(type_load)
     context = {
-        'title': 'Creator',
         'type_load': type_load,
         "type_load_length": n,
         'type_results': type_results,
@@ -173,8 +172,8 @@ class UpdateHoursView(View):
 
 
 def success(request):
-    return render(request, 'table_creator/success.html', {'title': 'Успешно'})
+    return render(request, template_name='table_creator/success.html')
 
 
 def error(request):
-    return render(request, 'table_creator/error.html', {'title': 'Ошибка'})
+    return render(request, template_name='table_creator/error.html')

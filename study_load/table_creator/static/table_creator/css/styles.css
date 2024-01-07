@@ -1,3 +1,6 @@
+html, body {
+  height: 100%;
+}
 body {
   font-size: 14px;
   font-family: Georgia, 'Times New Roman', Times, serif;
@@ -78,14 +81,15 @@ option {
 
 .button {
   margin: 10px;
-  border: 2px solid black;
+  border: 2px solid #ffab40;
   border-radius: 6px;
-  background-color: #ddd4b8;
+  background-color: #ffab40;
   width: 150px;
   height: 40px;
   font-family: inherit;
   font-size: inherit;
   font-weight: bold;
+  cursor: pointer;
 }
 
 @media print {
@@ -133,9 +137,33 @@ option {
     }
   }
 }
+.delete-row-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  
+}
+
+.delete-row-element {
+  margin: 0px 10px;
+}
+
+.delete-row-input {
+  width: 30px;
+}
 
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
+.sign {
+  margin-bottom: 10px;
+  margin-top: 30px;
+  font-size: 15px;
+}
 
 
 /* main button */
@@ -268,3 +296,4 @@ option {
   margin: 0 auto;
   text-align: center;
 }
+
