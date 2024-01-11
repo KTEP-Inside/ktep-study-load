@@ -5,29 +5,38 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import FormMixin, ProcessFormView, DeletionMixin
 
+from .forms import ClearDataForm
 from .services import add_data
 from .models import *
 from .utils import *
 from .validators import *
 
 
-@login_required
-def index(request):  # class + try
-    type_load = TypeLoad.objects.all()
-    teachers = Teacher.objects.all().order_by("name")
-    n = len(type_load)
-    context = {
-        'type_load': type_load,
-        "type_load_length": n,
-        'type_results': type_results,
-        'input_load_semester': n * 2 + 3,
-        'teachers': teachers,
-    }
-    # add_data()
-    return render(request, template_name='table_creator/table_creator.html', context=context)
+class MainView(LoginRequiredMixin, View):
+    template_name = 'table_creator/table_creator.html'
+
+    @staticmethod
+    def get_context_data():
+        type_load = TypeLoad.objects.all()
+        teachers = Teacher.objects.all().order_by("name")
+        n = len(type_load)
+        context = {
+            'type_load': type_load,
+            "type_load_length": n,
+            'type_results': type_results,
+            'input_load_semester': n * 2 + 3,
+            'teachers': teachers,
+        }
+        return context
+
+    def get(self, request):
+        context = self.get_context_data()
+        return render(request, template_name=self.template_name, context=context)
 
 
 class GetGroupsView(LoginRequiredMixin, View):
@@ -172,6 +181,35 @@ class UpdateHoursView(LoginRequiredMixin, View):
         except Exception as e:
             prev_val = self._get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id)
             return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
+
+
+class ClearDataView(LoginRequiredMixin, FormMixin, DeletionMixin, View):
+    form_class = ClearDataForm
+    template_name = 'table_creator/clear_data.html'
+
+    # def get(self, request):
+    #     form = self.form_class()
+    #     return render(request, template_name=self.template_name, context={'form': form})
+    #
+    # def post(self, request, *args, **kwargs):
+    #     form = self.get_form()
+    #     if form.is_valid():
+    #         password = form.cleaned_data['password']
+    #         user = request.user
+    #
+    #         if user.check_password(password):
+    #             return redirect(self.success_url)
+    #         else:
+    #             return self.form_invalid(form)
+    #
+    #     return render(request, self.template_name, {'form': form})
+    #
+    # def get_success_url(self):
+    #     return reverse_lazy('clear_data_done')
+
+
+class ClearDataDoneView(LoginRequiredMixin, View):
+    template_name = 'table_creator/clear_data_done.html'
 
 
 @login_required
