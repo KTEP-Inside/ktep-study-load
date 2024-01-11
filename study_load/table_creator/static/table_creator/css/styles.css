@@ -1,9 +1,11 @@
 html, body {
   height: 100%;
+  margin: 0;
 }
 body {
   font-size: 14px;
   font-family: Georgia, 'Times New Roman', Times, serif;
+  
 }
 
 /* main-table */
@@ -12,6 +14,7 @@ body {
 .main-table {
   border: 2px solid;
   border-collapse: collapse;
+  margin: 15px;
 }
 
 .teacher {
@@ -29,7 +32,10 @@ body {
 	display: inline-block;
 }
 
-
+a {
+  text-decoration: none;
+  color: inherit;
+}
 tr td{
   border: 2px solid black;
 }
@@ -92,6 +98,46 @@ option {
   cursor: pointer;
 }
 
+.main-menu {
+  background-color: #FFE5B4;
+  margin-bottom: 10px;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.main-menu-button {
+  background-color: #ffab40;
+  border: 2px solid #ffab40;
+  border-radius: 6px;
+  margin: 0px 10px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  width: 95px;
+  text-align: center;
+  height: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-menu-elem {
+  width: 120px;
+}
+
+.main-menu-elem a {
+  width: 91px;
+  height: 21px;
+  
+}
 @media print {
 
   .budget {
@@ -135,6 +181,17 @@ option {
       background: transparent; /* Прозрачный фон */
       border: none; /* Убираем рамку */
     }
+  }
+  .main-menu {
+    display: none;
+  }
+
+  .subject {
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: normal;
   }
 }
 .delete-row-menu {

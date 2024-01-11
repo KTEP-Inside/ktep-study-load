@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'users.context_processors.get_table_creator_context',
             ],
             'libraries': {
                 'my_template_extras': 'table_creator.templatetags.table_creator_extras',

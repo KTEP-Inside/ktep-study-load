@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
                 var cookie = cookies[i].trim();
-                // Ищем куку с нужным именем
+                // Ищем куки с нужным именем
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -186,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupId = `group_${rowId}`;
         let selectedGroupId = document.getElementById(groupId).value;
 
-        // оптимизировать
         let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
             return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
                 .then(response => response.json())
