@@ -8,11 +8,11 @@
 <form method="post">
     {% csrf_token %}
     <div class="form-error">{{ form.non_field_errors}}</div>
-    {{ form.as_p }}
+{% for f in form %}
+<p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
+{% endfor %}
 
-<div class="form-error">
-    {{ f.errors }}
-</div>
+<div class="form-error">{{ f.errors }}</div>
     <p><button type="submit">Сохранить</button></p>
 </form>
 

@@ -11,13 +11,13 @@
     <div class="form-error">{{ form.non_field_errors}}</div>
 
     <input type="hidden" name="next" value="{{ next }}">
+    {% for f in form %}
+    <p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
+    {% endfor %}
 
-    {{ form.as_p }}
+    <div class="form-error">{{ f.errors }}</div>
     <p><button type="submit">Зарегистрироваться</button></p>
 
-<div class="form-error">
-    {{ f.errors }}
-</div>
 </form>
 </div>
 {% endblock %}
