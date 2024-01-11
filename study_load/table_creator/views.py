@@ -1,10 +1,12 @@
 import json
 
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .services import add_data
 from .models import *
@@ -12,6 +14,7 @@ from .utils import *
 from .validators import *
 
 
+@login_required
 def index(request):  # class + try
     type_load = TypeLoad.objects.all()
     teachers = Teacher.objects.all().order_by("name")
@@ -27,7 +30,7 @@ def index(request):  # class + try
     return render(request, template_name='table_creator/table_creator.html', context=context)
 
 
-class GetGroupsView(View):  # try
+class GetGroupsView(LoginRequiredMixin, View):
 
     def get(self, request, teacher_id):
         teacher_has_subj = TeacherHasSubject.objects.filter(
@@ -46,7 +49,7 @@ class GetGroupsView(View):  # try
         return JsonResponse(data, safe=False)
 
 
-class GetSubjectsView(View):  # try
+class GetSubjectsView(LoginRequiredMixin, View):
     def get(self, request, teacher_id, group_id):
         hours_load = HoursLoad.objects.filter(
             group_id=group_id
@@ -64,7 +67,7 @@ class GetSubjectsView(View):  # try
         return JsonResponse(data, safe=False)
 
 
-class GetStudyLoadHoursView(View):  # try
+class GetStudyLoadHoursView(LoginRequiredMixin, View):
 
     def get(self, request, teacher_id, group_id, subject_id, type_load_id):
 
@@ -85,9 +88,9 @@ class GetStudyLoadHoursView(View):  # try
         return JsonResponse(data, safe=False)
 
 
-class ExcelFileUploadView(View):
+class ExcelFileUploadView(LoginRequiredMixin, View):
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
 
         if 'file_name' in request.FILES:
             uploaded_file = request.FILES['file_name']
@@ -101,7 +104,7 @@ class ExcelFileUploadView(View):
         return redirect('upload-error')
 
 
-class UpdateHoursView(View):
+class UpdateHoursView(LoginRequiredMixin, View):
 
     @staticmethod
     def _set_exam_or_hours(obj, exam=None, hours=None):
@@ -171,9 +174,11 @@ class UpdateHoursView(View):
             return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
 
 
+@login_required
 def success(request):
     return render(request, template_name='table_creator/success.html')
 
 
+@login_required
 def error(request):
     return render(request, template_name='table_creator/error.html')

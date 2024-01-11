@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %} Войти {% endblock %}
+
+{% block content %}
+
+<div class="login-form reg-form">
+    <div class="form-error">{{ form.non_field_errors}}</div>
+
+<form method="post" action="{% url 'users:login' %}">
+{% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+<table>
+
+<tr>
+    <td>{{ form.username.label }}</td>
+    <td>{{ form.username }}</td>
+</tr>
+<tr>
+    <td>{{ form.password.label }}</td>
+    <td>{{ form.password }}</td>
+</tr>
+
+</table>
+
+<div class="form-error">
+    {{ f.errors }}
+</div>
+
+<input type="submit" value="Войти">
+</form>
+
+<div class="user-actions">
+<a>Забыли пароль?</a>
+<a href="{% url 'users:register' %}">Зарегистрироваться</a>
+</div>
+
+</div>
+{% endblock %}

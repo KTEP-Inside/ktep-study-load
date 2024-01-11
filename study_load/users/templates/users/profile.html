@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="profile reg-form">
+<h1>Профиль</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-error">{{ form.non_field_errors}}</div>
+    {{ form.as_p }}
+
+<div class="form-error">
+    {{ f.errors }}
+</div>
+    <p><button type="submit">Сохранить</button></p>
+</form>
+
+<hr>
+
+<p><a href="{% url 'users:password_change' %}">Сменить пароль</a></p>
+
+</div>
+{% endblock %}

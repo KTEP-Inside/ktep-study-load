@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+<div class="register-form reg-form">
+<h1>Регистрация</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-error">{{ form.non_field_errors}}</div>
+
+    <input type="hidden" name="next" value="{{ next }}">
+
+    {{ form.as_p }}
+    <p><button type="submit">Зарегистрироваться</button></p>
+
+<div class="form-error">
+    {{ f.errors }}
+</div>
+</form>
+</div>
+{% endblock %}
