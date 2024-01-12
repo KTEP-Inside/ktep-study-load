@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 for (let j = 3; j < last; j++) {
                     cells[j].getElementsByTagName('input')[0].value = 0;
+                    cells[j].getElementsByTagName('input')[0].disabled = true;
                 }
             }
             for (let rowIdx = 0; rowIdx < tableResults.rows.length; rowIdx++) {
@@ -120,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
                 for (let j = 2; j < 5; j++) {
                     cells[j].getElementsByTagName('input')[0].value = 0;
+                    cells[j].getElementsByTagName('input')[0].disabled = true;
                 }
             }
         };

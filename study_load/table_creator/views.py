@@ -3,12 +3,12 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormMixin, ProcessFormView, DeletionMixin
+from django.views.generic.edit import FormMixin, DeletionMixin
 
 from .forms import ClearDataForm
 from .services import add_data
@@ -183,33 +183,45 @@ class UpdateHoursView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
 
 
-class ClearDataView(LoginRequiredMixin, FormMixin, DeletionMixin, View):
+class ClearDataView(LoginRequiredMixin, FormMixin, View):
     form_class = ClearDataForm
     template_name = 'table_creator/clear_data.html'
 
-    # def get(self, request):
-    #     form = self.form_class()
-    #     return render(request, template_name=self.template_name, context={'form': form})
-    #
-    # def post(self, request, *args, **kwargs):
-    #     form = self.get_form()
-    #     if form.is_valid():
-    #         password = form.cleaned_data['password']
-    #         user = request.user
-    #
-    #         if user.check_password(password):
-    #             return redirect(self.success_url)
-    #         else:
-    #             return self.form_invalid(form)
-    #
-    #     return render(request, self.template_name, {'form': form})
-    #
-    # def get_success_url(self):
-    #     return reverse_lazy('clear_data_done')
+    def get(self, request):
+        form = self.form_class()
+        return render(request, template_name=self.template_name, context={'form': form})
 
+    def post(self, request):
+        form = self.get_form()
+        if form.is_valid():
+            password = form.cleaned_data['password']
+            user = request.user
+
+            if user.check_password(password):
+                self.delete_data()
+                return self.form_valid(form)
+            else:
+                return self.form_invalid(form)
+
+        return render(request, self.template_name, {'form': form})
+
+    def form_valid(self, form):
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        return render(self.request, self.template_name, {'form': form})
+
+    def get_success_url(self):
+        return reverse_lazy('clear_data_done')
+
+    def delete_data(self):
+        pass
 
 class ClearDataDoneView(LoginRequiredMixin, View):
     template_name = 'table_creator/clear_data_done.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
 
 
 @login_required

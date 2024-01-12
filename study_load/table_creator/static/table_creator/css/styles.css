@@ -58,13 +58,13 @@ td {
 }
 
 table input {
-	width: 90%;
-	display: block;
+  width: 90%;
+  display: block;
   margin-left: auto;
   margin-right: auto;
-	border: none;
-	background-color: #EEEEEE;
-	text-align: center;
+  border: none;
+  background-color: #EEEEEE;
+  text-align: center;
   font-weight: bold;
 }
 
@@ -136,7 +136,20 @@ option {
 .main-menu-elem a {
   width: 91px;
   height: 21px;
-  
+}
+
+.clear-data {
+  width: 146px;
+  height: 36px;
+  background-color: #ff0000;
+  border: 2px solid #ff0000;
+  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
 }
 @media print {
 
