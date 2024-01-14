@@ -298,18 +298,18 @@ input[type="number"]::-webkit-outer-spin-button {
   transition: background-color 0.2s linear;
 }
 
-.form-upload__submit:hover {
+.form-upload__submit.active-button:hover {
   background-color: #FFFFFF;
   cursor: pointer;
   transition: background-color 0.2s linear;
 } 
 
-.form-upload__submit:focus-visible {
+.form-upload__submit.active-button:focus-visible {
   border: 2px solid #ffffff;
   outline: none;
 }
 
-.form-upload__submit:focus {
+.form-upload__submit.active-button:focus {
   border: 2px solid #ffffff;
   outline: none;
 }

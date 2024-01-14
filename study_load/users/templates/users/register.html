@@ -13,9 +13,9 @@
     <input type="hidden" name="next" value="{{ next }}">
     {% for f in form %}
     <p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
-    {% endfor %}
 
     <div class="form-error">{{ f.errors }}</div>
+    {% endfor %}
     <p><button type="submit">Зарегистрироваться</button></p>
 
 </form>
