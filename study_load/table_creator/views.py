@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic.edit import FormMixin, DeletionMixin
 
 from .forms import ClearDataForm
@@ -44,14 +44,14 @@ class GetGroupsView(LoginRequiredMixin, View):
     def get(self, request, teacher_id):
         teacher_has_subj = TeacherHasSubject.objects.filter(
             teacher_id=teacher_id
-        ).values('teacher_has_subject')
+        ).values('teacher_has_subject').distinct()
 
         group_ids = HoursLoad.objects.filter(
             teacher_subject_id__in=teacher_has_subj
-        ).values('group_id')
+        ).values('group_id').distinct()
 
         name_group = SpecialityHasCourse.objects.filter(
-            speciality_id__in=group_ids
+            course_has_speciality__in=group_ids
         ).order_by("name_group").values('name_group', 'course_has_speciality')
 
         data = tuple(name_group)
@@ -97,7 +97,8 @@ class GetStudyLoadHoursView(LoginRequiredMixin, View):
         return JsonResponse(data, safe=False)
 
 
-class ExcelFileUploadView(LoginRequiredMixin, View):
+class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = 'table_creator.add_hoursload'
 
     def post(self, request):
 
@@ -113,7 +114,8 @@ class ExcelFileUploadView(LoginRequiredMixin, View):
         return redirect('upload-error')
 
 
-class UpdateHoursView(LoginRequiredMixin, View):
+class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = 'table_creator.change_hoursload'
 
     @staticmethod
     def _set_exam_or_hours(obj, exam=None, hours=None):
@@ -160,7 +162,7 @@ class UpdateHoursView(LoginRequiredMixin, View):
             val = int(val)
             self._set_exam_or_hours(hours_load if hours_load else created, hours=val)
 
-    def post(self, request, teacher_id, group_id, subject_id, type_load_id, semester_id):
+    def put(self, request, teacher_id, group_id, subject_id, type_load_id, semester_id):
         try:
             val = json.loads(request.body)['val']
             validate_val(val)
@@ -183,9 +185,12 @@ class UpdateHoursView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
 
 
-class ClearDataView(LoginRequiredMixin, FormMixin, View):
+class ClearDataView(PermissionRequiredMixin, LoginRequiredMixin, FormMixin, View):
+    """Очищаем данные за прошлый год, можно изменить post на delete
+    для соблюдения REST, но тут не вижу в этом смысла"""
     form_class = ClearDataForm
     template_name = 'table_creator/clear_data.html'
+    permission_required = 'table_creator.delete_hoursload'
 
     def get(self, request):
         form = self.form_class()
@@ -201,6 +206,7 @@ class ClearDataView(LoginRequiredMixin, FormMixin, View):
                 self.delete_data()
                 return self.form_valid(form)
             else:
+                form.add_error('password', 'Неверный пароль')
                 return self.form_invalid(form)
 
         return render(request, self.template_name, {'form': form})
@@ -214,11 +220,16 @@ class ClearDataView(LoginRequiredMixin, FormMixin, View):
     def get_success_url(self):
         return reverse_lazy('clear_data_done')
 
-    def delete_data(self):
-        pass
+    @staticmethod
+    def delete_data() -> None:
+        models_list = [Teacher, TeacherHasSubject, Subject, SpecialityHasCourse, HoursLoad]
+        for model in models_list:
+            model.objects.all().delete()
 
-class ClearDataDoneView(LoginRequiredMixin, View):
+
+class ClearDataDoneView(PermissionRequiredMixin, LoginRequiredMixin, View):
     template_name = 'table_creator/clear_data_done.html'
+    permission_required = 'table_creator.delete_hoursload'
 
     def get(self, request):
         return render(request, self.template_name)
@@ -232,3 +243,11 @@ def success(request):
 @login_required
 def error(request):
     return render(request, template_name='table_creator/error.html')
+
+
+def page_not_found_view(request):
+    return render(request, template_name='404.html', status=404)
+
+
+def page_access_is_denied(request):
+    return render(request, template_name='403.html', status=403)

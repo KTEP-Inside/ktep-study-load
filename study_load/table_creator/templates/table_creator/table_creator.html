@@ -55,7 +55,7 @@
   </tfoot>
 </table>
 <div class="sign">С нагрузкой ознакомлен, не возражаю ___________________________</div>
-
+{% if perms.table_creator.add_hoursload %}
 <div class="demo-wrapper">
   <form
     class="form-upload"
@@ -80,10 +80,11 @@
       id="uploadForm_Submit"
       type="submit"
       value="Загрузить файл"
+      disabled
     >
   </form>
 </div>
-
+{% endif %}
 <div class="buttons-menu">
 <div><input type="button" class="button" value="Добавить строку" id="add_row"></div>
 <div class="delete-row-menu">
@@ -92,10 +93,14 @@
     <input type="number" id="row_number_input"  class="delete-row-element delete-row-input">
 </div>
 <div><button class="button" id="print-button">Печать</button></div>
+
+{% if perms.table_creator.delete_hoursload %}
 <div><a href="{% url 'clear_data' %}" class="button clear-data">Очистить данные</a></div>
+{% endif %}
 </div>
 
 <script src="{% static 'table_creator/js/print.js' %}"></script>
+<script src="{% static 'table_creator/js/check_file.js' %}"></script>
 <script src="{% static 'table_creator/js/get_data.js' %}"></script>
 <script src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
 {% endblock %}

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             console.log(data);
             let requestOptions = {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'Content-type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
