@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'table_creator.middlewares.PermissionDeniedMiddleware',
 ]
 
 ROOT_URLCONF = 'study_load.urls'
