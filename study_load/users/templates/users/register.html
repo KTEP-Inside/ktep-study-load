@@ -4,7 +4,7 @@
 {% block content %}
 
 <div class="register-form reg-form">
-<h1>Регистрация</h1>
+<h1 class="form-header">Регистрация</h1>
 
 <form method="post">
     {% csrf_token %}
@@ -12,11 +12,14 @@
 
     <input type="hidden" name="next" value="{{ next }}">
     {% for f in form %}
-    <p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
+    <div class="form-container"><label class="form-label">{{ f.label }}: </label>{{ f }}</div>
 
     <div class="form-error">{{ f.errors }}</div>
     {% endfor %}
-    <p><button type="submit">Зарегистрироваться</button></p>
+    <div class="button-containter">
+        <button type="submit" class="form-button-submit register-submit-button">Зарегистрироваться</button>
+    </div>
+
 
 </form>
 </div>

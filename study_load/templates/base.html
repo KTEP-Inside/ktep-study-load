@@ -15,11 +15,14 @@
         {% csrf_token %}
         <button type="submit" class="main-menu-button">Выйти</button>
       </form>
+    
     {% for m in mainmenu %}
     <div class="main-menu-elem">
         <a href="{% url m.url_name %}" class="main-menu-button">{{ m.title }}</a>
     </div>
     {% endfor %}
+    {% else %}
+        <a href="{% url 'users:login' %}" class="main-menu-button">Войти</a>
 
     {% endif %}
 

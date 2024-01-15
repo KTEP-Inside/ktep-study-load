@@ -5,7 +5,7 @@
 {% block content %}
 
 <div class="reg-form">
-<h1>Очистка данных</h1>
+<h1 class="form-header">Очистка данных</h1>
 <p>Внимание! Это приведет к полному удалению данных!
     <br>Введите пароль, чтобы подтвердить удаление
 </p>
@@ -14,9 +14,11 @@
     {% csrf_token %}
 
     {% for f in form %}
-    <p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
+    <div class="form-container"><label class="form-label">{{ f.label }}: </label>{{ f }}</div>
     <div class="form-error">{{ f.errors }}</div>
-    <p><input type="submit" value="Подтвердить"></p>
+    <div class="button-containter">
+        <button type="submit" class="form-button-submit delete-button-submit">Подтвердить</button>
+    </div>
     {% endfor %}
     
 </form>

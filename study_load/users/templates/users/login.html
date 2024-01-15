@@ -5,24 +5,24 @@
 {% block content %}
 
 <div class="login-form reg-form">
+    <h1 class="form-header">Войти</h1>
     <div class="form-error">{{ form.non_field_errors}}</div>
 
 <form method="post" action="{% url 'users:login' %}">
-{% csrf_token %}
+    {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
-{% for f in form %}
-<p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
-{% endfor %}
+    {% for f in form %}
+    <div class="form-container"><label class="form-label">{{ f.label }}: </label>{{ f }}</div>
+    {% endfor %}
 
-<div class="form-error">{{ f.errors }}</div>
+    <div class="form-error">{{ f.errors }}</div>
 
-
-<input type="submit" value="Войти">
+    <div class="button-containter"><button type="submit" class="form-button-submit">Войти</button></div>
 </form>
 
 <div class="user-actions">
-<a href="{% url 'users:password_reset' %}">Забыли пароль?</a>
-<a href="{% url 'users:register' %}">Зарегистрироваться</a>
+    <a class="user-action-url form-button-submit" href="{% url 'users:password_reset' %}">Забыли пароль?</a>
+    <a class="user-action-url form-button-submit" href="{% url 'users:register' %}">Зарегистрироваться</a>
 </div>
 
 </div>

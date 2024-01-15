@@ -3,22 +3,24 @@
 {% block content %}
 
 <div class="profile reg-form">
-<h1>Профиль</h1>
+<h1 class="form-header">Профиль</h1>
 
 <form method="post">
     {% csrf_token %}
     <div class="form-error">{{ form.non_field_errors}}</div>
 {% for f in form %}
-<p><label class="form-label">{{ f.label }}: </label>{{ f }}</p>
+<div class="form-container"><label class="form-label">{{ f.label }}: </label>{{ f }}</div>
 
 <div class="form-error">{{ f.errors }}</div>
     {% endfor %}
-    <p><button type="submit">Сохранить</button></p>
+    <div class="button-containter"><button type="submit" class="form-button-submit">Сохранить</button></div>
 </form>
 
 <hr>
 
-<p><a href="{% url 'users:password_change' %}">Сменить пароль</a></p>
+<div class="user-actions">
+    <a class="user-action-url form-button-submit" href="{% url 'users:password_change' %}">Сменить пароль</a>
+</div>
 
 </div>
 {% endblock %}

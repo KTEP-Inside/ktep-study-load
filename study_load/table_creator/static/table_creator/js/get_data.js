@@ -102,6 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let selectedTeacherId = teacherSelect.value;
         let groupElements = document.querySelectorAll('.group');
         let subjectElements = document.querySelectorAll('.subject');
+        document.title = teacherSelect.options[teacherSelect.selectedIndex].text;
+        console.log(teacherSelect.selectedIndex);
 
         if (mainTable.rows.length >= 1) {
             for (let rowIdx = 0; rowIdx < mainTable.rows.length; rowIdx++) {

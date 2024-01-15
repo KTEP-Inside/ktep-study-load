@@ -26,6 +26,12 @@ class RegisterUserForm(UserCreationForm):
             'last_name': 'Фамилия'
         }
 
+        widgets = {
+            'email': forms.TextInput(attrs={'class': 'form-input'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input'})
+        }
+
     def clean_email(self):
         email = self.cleaned_data['email']
         if get_user_model().objects.filter(email=email).exists():
@@ -41,14 +47,18 @@ class ProfileUserForm(forms.ModelForm):
         model = get_user_model()
         fields = ['username', 'email', 'first_name', 'last_name']
         labels = {
-            'email': 'E-mail',
             'first_name': 'Имя',
             'last_name': 'Фамилия'
         }
 
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input'})
+        }
+
 
 class UserPasswordChangeForm(PasswordChangeForm):
-    old_password = forms.CharField(label='Старый пароль', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    new_password1 = forms.CharField(label='Новый пароль', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    old_password = forms.CharField(label='Старый пароль', widget=forms.PasswordInput(attrs={'class': 'form-input'}))
+    new_password1 = forms.CharField(label='Новый пароль', widget=forms.PasswordInput(attrs={'class': 'form-input'}))
     new_password2 = forms.CharField(label='Подтверждение пароля',
-                                    widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+                                    widget=forms.PasswordInput(attrs={'class': 'form-input'}))
