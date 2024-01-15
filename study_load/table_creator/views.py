@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.views.generic.edit import FormMixin, DeletionMixin
+from django.views.generic.edit import FormMixin
 
 from .forms import ClearDataForm
 from .services import add_data

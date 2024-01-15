@@ -16,7 +16,7 @@
             <option value="{{ teacher.pk }}">{{ teacher }}</option>
           {% endfor %}
       </select>
-      <select id="education_year" class="education_year"></select> <!-- добавить базу с годами, как создавать -->
+        <input type="text" id="year" name="year" class="education_year">
       </td>
     </tr>
   </thead>
@@ -47,14 +47,28 @@
     <tr>
       <td colspan="2">{{ budget }}</td>
       <td colspan="19"></td>
-      <td><input type="text" id="budget_sum_{{ forloop.counter }}" value="0"></td>
-      <td><input type="text" id="extra_budget_sum_{{ forloop.counter }}" value="0"></td>
-      <td><input type="text" id="budget_result_{{ forloop.counter }}" value="0"></td>
+      <td><input type="text" id="budget_sum_{{ forloop.counter }}" value="0" disabled></td>
+      <td><input type="text" id="extra_budget_sum_{{ forloop.counter }}" value="0" disabled></td>
+      <td><input type="text" id="budget_result_{{ forloop.counter }}" value="0" disabled></td>
     </tr>
     {% endfor %}
   </tfoot>
 </table>
 <div class="sign">С нагрузкой ознакомлен, не возражаю ___________________________</div>
+
+<div class="buttons-menu">
+<div><input type="button" class="button" value="Добавить строку" id="add_row"></div>
+<div class="delete-row-menu">
+    <input type="button" class="button" value="Удалить строку" id="delete_row" >
+    <label for="row_number_input" class="delete-row-element">Номер строки:
+      <input type="number" id="row_number_input"  class="delete-row-element delete-row-input"></label>
+
+</div>
+<div><button class="button" id="print-button">Печать</button></div>
+
+{% if perms.table_creator.delete_hoursload %}
+<div><a href="{% url 'clear_data' %}" class="button clear-data">Очистить данные</a></div>
+{% endif %}
 {% if perms.table_creator.add_hoursload %}
 <div class="demo-wrapper">
   <form
@@ -66,7 +80,7 @@
 
       {% csrf_token %}
     <label class="form-upload__label" for="uploadForm_File">
-      <span class="form-upload__title">Excel файл:</span>
+      <span class="form-upload__title">Excel файл</span>
       <input
         class="form-upload__input"
         id="uploadForm_File"
@@ -85,22 +99,11 @@
   </form>
 </div>
 {% endif %}
-<div class="buttons-menu">
-<div><input type="button" class="button" value="Добавить строку" id="add_row"></div>
-<div class="delete-row-menu">
-    <input type="button" class="button" value="Удалить строку" id="delete_row" >
-    <label for="row_number_input" class="delete-row-element">Номер строки:</label>
-    <input type="number" id="row_number_input"  class="delete-row-element delete-row-input">
-</div>
-<div><button class="button" id="print-button">Печать</button></div>
-
-{% if perms.table_creator.delete_hoursload %}
-<div><a href="{% url 'clear_data' %}" class="button clear-data">Очистить данные</a></div>
-{% endif %}
 </div>
 
 <script src="{% static 'table_creator/js/print.js' %}"></script>
 <script src="{% static 'table_creator/js/check_file.js' %}"></script>
 <script src="{% static 'table_creator/js/get_data.js' %}"></script>
 <script src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
+<script src="{% static 'table_creator/js/create_year.js' %}"></script>
 {% endblock %}

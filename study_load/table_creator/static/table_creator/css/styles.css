@@ -151,6 +151,18 @@ option {
   align-items: center;
 
 }
+
+.buttons-menu {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
+.demo-wrapper {
+  display: flex;
+}
 @media print {
 
   .budget {
@@ -206,16 +218,22 @@ option {
     box-sizing: border-box;
     white-space: normal;
   }
+
+  .education_year {
+    background: transparent; /* Прозрачный фон */
+    border: none;
+  }
 }
 .delete-row-menu {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  flex-direction: column;
   
 }
 
 .delete-row-element {
-  margin: 0px 10px;
+  margin: 0px 5px;
 }
 
 .delete-row-input {
@@ -232,6 +250,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .sign {
   margin-bottom: 10px;
   margin-top: 30px;
+  margin-left: 10px;
   font-size: 15px;
 }
 
@@ -246,15 +265,18 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .form-upload__label {
   display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
 }
 
 .form-upload__title {
   max-width: 200px;
-  margin-right: 55px;
+  margin-bottom: 20px;
   font-size: 24px;
   font-weight: 500;
   line-height: 1;
+  text-align: center;
 }
 
 .form-upload__input {
@@ -343,7 +365,6 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .answer-text {
   font-size: 60px;
-  
 }
 
 
