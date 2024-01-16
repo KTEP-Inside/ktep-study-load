@@ -10,7 +10,7 @@
   border: 1px solid black;
   border-radius: 10px;
   width: 80%;
-  height: 50%;
+  height: 60%;
   max-height: 500px;
   max-width: 450px;
   padding: 20px;
@@ -94,4 +94,9 @@
   width: 160px;
   background-color: #FFE5B4;
   border: 2px solid #FFE5B4;
+}
+
+.forms-text {
+  font-size: 16px;
+  text-align: center;
 }

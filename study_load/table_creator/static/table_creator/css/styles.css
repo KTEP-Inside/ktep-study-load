@@ -166,8 +166,9 @@ option {
 @media print {
 
   .budget {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+    white-space: nowrap;
   }
   
   .semester {
@@ -223,6 +224,7 @@ option {
     background: transparent; /* Прозрачный фон */
     border: none;
   }
+
 }
 .delete-row-menu {
   display: flex;
