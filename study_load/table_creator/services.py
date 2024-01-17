@@ -3,17 +3,19 @@ from openpyxl.cell import Cell
 from openpyxl.worksheet.worksheet import Worksheet
 from .models import *
 
+is_paid = False
+
 
 def create_group(ws: Worksheet):
+    global is_paid
     """Специальность, группа и курс"""
     try:
-        speciality = ws['A4'].value.split()[3].strip()
-        name_group = ' '.join(ws['A4'].value.split()[3:])
+        speciality = ' '.join(ws['A4'].value.split()[3:-1]).strip()  # специальность
+        name_group = ' '.join(ws['A4'].value.split()[3:])  # полная группа
     except AttributeError:
         return 'Неверный шаблон'
 
-    is_paid = False
-    if ws['A4'].value.split()[-2][-1] == 'п':
+    if ws['A4'].value.split()[-2][-1] == 'п':  # проверка на платную группу
         is_paid = True
 
     num_course = Course.objects.get(pk=int(ws.title[0]))
@@ -22,23 +24,25 @@ def create_group(ws: Worksheet):
                                                                speciality=speciality_obj,  # группы
                                                                name_group=name_group,
                                                                is_paid=is_paid)
-    return group, is_paid
+    return group
 
 
 def create_table(ws: Worksheet,
                  subject: Cell,
                  teachers: Cell,
-                 group: SpecialityHasCourse,
-                 is_paid: bool):
+                 group: SpecialityHasCourse,):
     """Препод и предмет, идём далее"""
 
-    if teachers.value is not None:
-        if teachers.value.title() in ('Всего', 'Итого') and not is_paid:
-            is_paid = True
+    global is_paid
 
-    if teachers.value is not None and subject.value is not None:
+    if subject.value is not None:
+        if subject.value.title() in ('Всего', 'Итого'):
+            is_paid = True  # Вне бюджетные записи
 
-        subject_obj, created = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=is_paid)
+    if teachers.value is not None and subject.value is not None:  # предмет + препод
+
+        # создаем предмет или берем уже существующий
+        subject_obj, created = Subject.objects.get_or_create(name=subject.value.strip())
 
         for teacher in teachers.value.split(','):
             teacher_obj, created = Teacher.objects.get_or_create(name=teacher)
@@ -56,9 +60,9 @@ def create_type_load(ws: Worksheet,
     """Тип нагрузки и вызов создания записей по семестрам"""
     for load in ws.iter_cols(min_col=4, min_row=5, max_row=5):  # все типы нагрузки
 
-        if load[0].value is not None:
+        if load[0].value is not None:  # Если есть значение
 
-            if load[0].value.find('Всего часов') == -1:
+            if load[0].value.find('Всего часов') == -1:  # завершаем по достижению
                 type_load = TypeLoad.objects.filter(name=load[0].value.strip()).exists()
 
                 if type_load:
@@ -84,9 +88,9 @@ def semester_load_writer(ws: Worksheet,
 
     for cell in ws.iter_cols(min_col=load[0].column, max_col=load[0].column + 1,
                              min_row=subject.row, max_row=subject.row):
-        semester_obj = Semester.objects.get(pk=semester)
+        semester_obj = Semester.objects.get(pk=semester) # получаем номер семестра
 
-        cur_cell = check_merge_cell(ws, cell)
+        cur_cell = check_merge_cell(ws, cell)  # проверка на merge и взятие значение
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
                     group=group, teacher_subject=teacher_subject)
         semester += 1
@@ -114,34 +118,38 @@ def create_load(cur_cell: str | int | float,
                 type_load_obj: TypeLoad,
                 group: SpecialityHasCourse,
                 teacher_subject: TeacherHasSubject):
-    """Проверка на тип добавления"""
+    """Создание часов нагрзуки на определённый семестр, кол-во часов и тп"""
+
+    # Проверка на тип добавления
     if not isinstance(cur_cell, int) and cur_cell not in ['ДЗ', 'Э']:
         cur_cell = 0
 
     if cur_cell in ['ДЗ', 'Э']:
-        exam_obj = Exam.objects.get(exam=cur_cell)
+        exam_obj = Exam.objects.get(exam=cur_cell)  # берем ДЗ или Э
         HoursLoad.objects.get_or_create(semester=semester_obj, type_load=type_load_obj,
                                         group=group, teacher_subject=teacher_subject,
-                                        exam=exam_obj)
+                                        exam=exam_obj)  # создаем запись нагрузки
     else:
         HoursLoad.objects.get_or_create(semester=semester_obj, type_load=type_load_obj,
                                         group=group, teacher_subject=teacher_subject,
-                                        hours=cur_cell)
+                                        hours=cur_cell) # создаем запись нагрузки
 
 
 def main_func(ws: Worksheet):
     """Основной скрипт получения данных с excel"""
 
-    group, is_paid = create_group(ws)
+    group = create_group(ws)
 
     # получаем преподавателей + их предмет
     for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=8):
-        create_table(ws, subject=subject, teachers=teachers, group=group, is_paid=is_paid)
+        create_table(ws, subject=subject, teachers=teachers, group=group)
 
 
 def add_data(file):
-    wb = openpyxl.load_workbook(file)
-    all_sheets = wb.sheetnames
-    for sheet_id, _ in enumerate(all_sheets):
+    global is_paid
+    wb = openpyxl.load_workbook(file) # открываем файл
+    all_sheets = wb.sheetnames  # все листы
+    for sheet_id, _ in enumerate(all_sheets): # проходим по всем листам
         ws = wb.worksheets[sheet_id]
         main_func(ws)
+        is_paid = False

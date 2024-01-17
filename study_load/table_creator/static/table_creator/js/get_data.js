@@ -144,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         let option = document.createElement('option');
                         option.value = group.course_has_speciality;
                         option.text = group.name_group;
+                        option.setAttribute('data-is-paid', group.is_paid);
 
                         groupElement.add(option);
                     });
@@ -246,10 +247,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function setCurrentBudget(rowId, budget_sum) {
         
         let cells = mainTable.rows[rowId].cells;
-        let selectedOption = cells[1].getElementsByTagName('select')[0].querySelector('option:checked');
-        let dataIsPaidValue = selectedOption.getAttribute('data-is-paid');
+        let selectedOptionSubject = cells[1].getElementsByTagName('select')[0].querySelector('option:checked');
+        let selectedOptionGroup = cells[2].getElementsByTagName('select')[0].querySelector('option:checked');
+        let dataIsPaidValueSubject = selectedOptionSubject.getAttribute('data-is-paid');
+        let dataIsPaidValueGroup = selectedOptionGroup.getAttribute('data-is-paid');
         
-        if (dataIsPaidValue === 'true') {
+        if (dataIsPaidValueSubject === 'true' | dataIsPaidValueGroup === 'true') {
             document.getElementById(`budget_0_${rowId+1}`).value = 0;
             document.getElementById(`budget_1_${rowId+1}`).value = budget_sum;
         } else {
@@ -258,16 +261,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         document.getElementById(`budget_2_${rowId+1}`).value = budget_sum;
-        changeResults(dataIsPaidValue);
+        changeResults(dataIsPaidValueSubject, dataIsPaidValueGroup);
     }
     
 
-    function changeResults(is_paid) {
+    function changeResults(isPaidSubject, isPaidGroup) {
         let newBudget = 0;
         let newExtraBudget = 0;
         let newTotalBudget = 0;
 
-        if (is_paid === 'true') {
+        if (isPaidSubject === 'true' | isPaidGroup === 'true') {
             let extraBudgetElements = document.querySelectorAll('[id^="budget_1_"]');
             extraBudgetElements.forEach(function(element) {
                 newExtraBudget += parseInt(element.value);

@@ -52,7 +52,7 @@ class GetGroupsView(LoginRequiredMixin, View):
 
         name_group = SpecialityHasCourse.objects.filter(
             course_has_speciality__in=group_ids
-        ).order_by("name_group").values('name_group', 'course_has_speciality')
+        ).order_by("name_group").values('name_group', 'course_has_speciality', 'is_paid')
 
         data = tuple(name_group)
         return JsonResponse(data, safe=False)
@@ -108,7 +108,7 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
                 add_data(uploaded_file)
                 return redirect('upload-success')
 
-            except:
+            except Exception as e:
                 return redirect('upload-error')
 
         return redirect('upload-error')

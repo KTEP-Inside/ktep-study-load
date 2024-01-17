@@ -110,6 +110,8 @@ function deleteRow() {
                         let option = document.createElement('option');
                         option.value = group.course_has_speciality;
                         option.text = group.name_group;
+                        option.setAttribute('data-is-paid', group.is_paid);
+
                         cur_row.add(option);
                     });
 

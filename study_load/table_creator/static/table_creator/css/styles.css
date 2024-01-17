@@ -195,9 +195,10 @@ option {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    padding-right: 10px; /* Добавляем дополнительное пространство справа, чтобы текст не налазил на галочку (по необходимости) */
+   
     background: transparent; /* Прозрачный фон */
     border: none; /* Убираем рамку */
+    
   }
   
   /* Добавляем кастомный стиль для Firefox */
