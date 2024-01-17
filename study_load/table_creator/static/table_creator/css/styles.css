@@ -192,10 +192,10 @@ option {
   }
   
   select {
+    font-weight: bold;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-   
     background: transparent; /* Прозрачный фон */
     border: none; /* Убираем рамку */
     
@@ -204,7 +204,6 @@ option {
   /* Добавляем кастомный стиль для Firefox */
   @-moz-document url-prefix() {
     select {
-      padding-right: 10px; /* Добавляем дополнительное пространство справа, чтобы текст не налазил на галочку (по необходимости) */
       background: transparent; /* Прозрачный фон */
       border: none; /* Убираем рамку */
     }

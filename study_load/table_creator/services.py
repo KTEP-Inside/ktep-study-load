@@ -7,8 +7,9 @@ is_paid = False
 
 
 def create_group(ws: Worksheet):
-    global is_paid
     """Специальность, группа и курс"""
+    global is_paid
+
     try:
         speciality = ' '.join(ws['A4'].value.split()[3:-1]).strip()  # специальность
         name_group = ' '.join(ws['A4'].value.split()[3:])  # полная группа
@@ -41,9 +42,10 @@ def create_table(ws: Worksheet,
 
     if teachers.value is not None and subject.value is not None:  # предмет + препод
 
-        # создаем предмет или берем уже существующий
+        # если это платный предмет в бесплатной группе
         if is_paid and not group.is_paid:
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=is_paid)[0]
+        # у платной группы свой флаг, поэтому все предметы платные ,и у них нет флага. Так же у бесплатной
         else:
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip())[0]
 
