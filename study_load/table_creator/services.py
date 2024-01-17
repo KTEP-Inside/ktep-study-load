@@ -30,7 +30,7 @@ def create_group(ws: Worksheet):
 def create_table(ws: Worksheet,
                  subject: Cell,
                  teachers: Cell,
-                 group: SpecialityHasCourse,):
+                 group: SpecialityHasCourse, ):
     """Препод и предмет, идём далее"""
 
     global is_paid
@@ -42,12 +42,15 @@ def create_table(ws: Worksheet,
     if teachers.value is not None and subject.value is not None:  # предмет + препод
 
         # создаем предмет или берем уже существующий
-        subject_obj, created = Subject.objects.get_or_create(name=subject.value.strip())
+        if is_paid and not group.is_paid:
+            subject_obj = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=is_paid)[0]
+        else:
+            subject_obj = Subject.objects.get_or_create(name=subject.value.strip())[0]
 
         for teacher in teachers.value.split(','):
-            teacher_obj, created = Teacher.objects.get_or_create(name=teacher)
-            teacher_subject, created = TeacherHasSubject.objects.get_or_create(teacher=teacher_obj,
-                                                                               subject=subject_obj)
+            teacher_obj = Teacher.objects.get_or_create(name=teacher)[0]
+            teacher_subject = TeacherHasSubject.objects.get_or_create(teacher=teacher_obj,
+                                                                      subject=subject_obj)[0]
 
             create_type_load(ws, subject=subject,
                              group=group, teacher_subject=teacher_subject)
@@ -88,7 +91,7 @@ def semester_load_writer(ws: Worksheet,
 
     for cell in ws.iter_cols(min_col=load[0].column, max_col=load[0].column + 1,
                              min_row=subject.row, max_row=subject.row):
-        semester_obj = Semester.objects.get(pk=semester) # получаем номер семестра
+        semester_obj = Semester.objects.get(pk=semester)  # получаем номер семестра
 
         cur_cell = check_merge_cell(ws, cell)  # проверка на merge и взятие значение
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
@@ -132,7 +135,7 @@ def create_load(cur_cell: str | int | float,
     else:
         HoursLoad.objects.get_or_create(semester=semester_obj, type_load=type_load_obj,
                                         group=group, teacher_subject=teacher_subject,
-                                        hours=cur_cell) # создаем запись нагрузки
+                                        hours=cur_cell)  # создаем запись нагрузки
 
 
 def main_func(ws: Worksheet):
@@ -147,9 +150,9 @@ def main_func(ws: Worksheet):
 
 def add_data(file):
     global is_paid
-    wb = openpyxl.load_workbook(file) # открываем файл
+    wb = openpyxl.load_workbook(file)  # открываем файл
     all_sheets = wb.sheetnames  # все листы
-    for sheet_id, _ in enumerate(all_sheets): # проходим по всем листам
+    for sheet_id, _ in enumerate(all_sheets):  # проходим по всем листам
         ws = wb.worksheets[sheet_id]
         main_func(ws)
         is_paid = False
