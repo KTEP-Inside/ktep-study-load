@@ -138,6 +138,37 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'custom_formatter': {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        }
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': f"{BASE_DIR}/logs/log.log",
+            'formatter': 'custom_formatter',
+            "encoding": "utf-8"
+        },
+    },
+    'loggers': {
+        'users': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True
+        },
+        'table_creator': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True
+        }
+    },
+}
 LOGIN_URL = 'users:login'
 LOGOUT_URL = 'users:logout'
 LOGIN_REDIRECT_URL = 'home'

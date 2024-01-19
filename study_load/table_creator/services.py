@@ -95,6 +95,7 @@ def semester_load_writer(ws: Worksheet,
                              min_row=subject.row, max_row=subject.row):
         semester_obj = Semester.objects.get(pk=semester)  # получаем номер семестра
 
+        # возможно убрать, в шаблоне вроде не будет merge ячеек
         cur_cell = check_merge_cell(ws, cell)  # проверка на merge и взятие значение
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
                     group=group, teacher_subject=teacher_subject)

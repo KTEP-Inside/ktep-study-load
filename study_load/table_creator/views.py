@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -15,6 +16,9 @@ from .services import add_data
 from .models import *
 from .utils import *
 from .validators import *
+
+
+logger = logging.getLogger(__name__)
 
 
 class MainView(LoginRequiredMixin, View):
@@ -173,6 +177,7 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
 
             self._update_hours_load(teacher_has_subj, semester_id, group_id, type_load_id, val)
 
+            logger.info('Изменение значения в базе')
             return JsonResponse({'status': 'success', 'message': 'Успешно'})
 
         except ValidationError as validation_error:
@@ -232,6 +237,7 @@ class ClearDataDoneView(PermissionRequiredMixin, LoginRequiredMixin, View):
     permission_required = 'table_creator.delete_hoursload'
 
     def get(self, request):
+        logger.info('Очистка базы')
         return render(request, self.template_name)
 
 
@@ -242,6 +248,7 @@ def success(request):
 
 @login_required
 def error(request):
+    logger.info('неправильный шаблон файла')
     return render(request, template_name='table_creator/error.html')
 
 
@@ -250,4 +257,5 @@ def page_not_found_view(request):
 
 
 def page_access_is_denied(request):
+    logger.warning('Не достаточно прав у пользователя')
     return render(request, template_name='403.html', status=403)
