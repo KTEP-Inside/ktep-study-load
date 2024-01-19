@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     let form = document.getElementById("uploadForm");
+    const loaderContainer = document.getElementById('loader-container');
+    const uploadForm = document.getElementById('uploadForm');
 
     form.addEventListener('input', checkFileSelection);
+    uploadForm.addEventListener('submit', showLoader)
 
     function checkFileSelection() {
         console.log(1);
@@ -17,4 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.classList.remove('active-button');
         }
     }
+
+    function showLoader() {
+        loaderContainer.style.display = 'block';
+    }
+
 });
