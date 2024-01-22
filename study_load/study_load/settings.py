@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = cfg.app.secret_key
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = cfg.app.debug
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = cfg.app.allowed_hosts.split(' ')
 
 # Application definition
 

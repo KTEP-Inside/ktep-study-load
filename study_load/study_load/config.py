@@ -9,6 +9,8 @@ env.read_env()
 @dataclass
 class App:
     secret_key: str = env('SECRET_KEY')
+    allowed_hosts: str = env('DJANGO_ALLOWED_HOSTS')
+    debug: int = env('DEBUG')
 
 
 @dataclass
