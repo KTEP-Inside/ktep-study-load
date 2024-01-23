@@ -100,3 +100,11 @@
   font-size: 16px;
   text-align: center;
 }
+
+.form-error {
+    color: red;
+}
+
+.form-error ul {
+    list-style-type: none;
+}
