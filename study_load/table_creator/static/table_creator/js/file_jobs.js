@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadForm.addEventListener('submit', showLoader)
 
     function checkFileSelection() {
-        console.log(1);
         let fileInput = document.getElementById('uploadForm_File');
         let submitButton = document.getElementById('uploadForm_Submit');
         if (fileInput.files.length > 0) {

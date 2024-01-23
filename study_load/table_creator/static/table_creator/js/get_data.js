@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
             let data = {
                 val: prevVal
             }
-            console.log(data);
             let requestOptions = {
                 method: 'PUT',
                 headers: {
@@ -64,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
                 if (data.status == 'success') {
                     onChangeHours.call(target, rowid, event);
                     
@@ -103,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupElements = document.querySelectorAll('.group');
         let subjectElements = document.querySelectorAll('.subject');
         document.title = teacherSelect.options[teacherSelect.selectedIndex].text;
-        console.log(teacherSelect.selectedIndex);
 
         if (mainTable.rows.length >= 1) {
             for (let rowIdx = 0; rowIdx < mainTable.rows.length; rowIdx++) {
