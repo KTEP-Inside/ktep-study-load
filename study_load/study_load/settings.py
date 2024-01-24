@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = cfg.app.secret_key
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = cfg.app.debug
+DEBUG = int(cfg.app.debug)
 
 ALLOWED_HOSTS = cfg.app.allowed_hosts.split(' ')
 
@@ -91,7 +91,7 @@ DATABASES = {
         'USER': cfg.db.db_user,
         'PASSWORD': cfg.db.db_password,
         'HOST': cfg.db.db_host,
-        'PORT': '3306',
+        'PORT': cfg.db.db_port,
         'OPTIONS': {
             'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"'
         }
