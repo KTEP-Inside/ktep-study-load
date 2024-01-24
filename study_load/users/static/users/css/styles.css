@@ -1,0 +1,110 @@
+.login-form {
+  width: 100%;
+}
+
+.reg-form {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid black;
+  border-radius: 10px;
+  width: 80%;
+  height: 60%;
+  max-height: 500px;
+  max-width: 450px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.user-actions {
+  display: flex;
+  font-weight: bold;
+}
+
+
+.form-label {
+  font-weight: bold;
+  font-size: 16px;
+  font-style: inherit;
+  display: inline-block;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.form-button-submit{
+  text-align: center;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: #ffab40;
+  border: 2px solid #ffab40;
+  border-radius: 6px;
+  width: 120px;
+  font-weight: bold;
+  height: 25px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.delete-button-submit{
+  background-color: red;
+  border: 2px solid red;
+}
+
+.form-input{
+  margin-bottom: 5px;
+}
+
+.form-container {
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.form-header {
+  margin-bottom: 30px;
+}
+
+.email-button-submit,
+.register-submit-button{
+  width: 200px;
+  height: 30px;
+  
+}
+
+.button-containter {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.user-action-url {
+  margin: 10px 10px;
+  width: 160px;
+  background-color: #FFE5B4;
+  border: 2px solid #FFE5B4;
+}
+
+.forms-text {
+  font-size: 16px;
+  text-align: center;
+}
+
+.form-error {
+    color: red;
+}
+
+.form-error ul {
+    list-style-type: none;
+}

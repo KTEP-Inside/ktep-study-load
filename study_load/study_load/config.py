@@ -9,6 +9,8 @@ env.read_env()
 @dataclass
 class App:
     secret_key: str = env('SECRET_KEY')
+    allowed_hosts: str = env('DJANGO_ALLOWED_HOSTS')
+    debug: int = env('DEBUG')
 
 
 @dataclass
@@ -21,9 +23,16 @@ class DataBase:
 
 
 @dataclass
+class EmailSettings:
+    email_host_user: str = env('EMAIL_HOST_USER')
+    email_host_password: str = env('EMAIL_HOST_PASSWORD')
+
+
+@dataclass
 class Config:
     db = DataBase()
     app = App()
+    settings_email = EmailSettings()
 
 
 cfg = Config()

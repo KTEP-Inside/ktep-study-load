@@ -17,8 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('table_creator.urls'))
+    path('users/', include('users.urls', namespace='users')),
+    path('', include('table_creator.urls')),
+
 ]
+
+handler_404 = "django_404_project.views.page_not_found_view"
+handler_403 = "django_403_project.views.page_not_found_view"

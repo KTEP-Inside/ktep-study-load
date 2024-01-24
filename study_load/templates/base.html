@@ -1,0 +1,36 @@
+{% load static %}
+{% load table_creator_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link type="text/css" href="{% static 'table_creator/css/styles.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'users/css/styles.css' %}" rel="stylesheet">
+</head>
+<header class="main-menu">
+    {% if user.is_authenticated %}
+
+    <form id="logout-form" method="post" action="{% url 'users:logout' %}" class="main-menu-elem">
+        {% csrf_token %}
+        <button type="submit" class="main-menu-button">Выйти</button>
+      </form>
+    
+    {% for m in mainmenu %}
+    <div class="main-menu-elem">
+        <a href="{% url m.url_name %}" class="main-menu-button">{{ m.title }}</a>
+    </div>
+    {% endfor %}
+    {% else %}
+        <a href="{% url 'users:login' %}" class="main-menu-button">Войти</a>
+
+    {% endif %}
+
+    
+</header>
+<body>
+
+    {% block content %}
+    {% endblock %}
+</body>
+</html>

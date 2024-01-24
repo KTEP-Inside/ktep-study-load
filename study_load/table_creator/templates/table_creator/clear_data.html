@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Очистка данных{% endblock %}
+
+{% block content %}
+
+<div class="reg-form">
+<h1 class="form-header">Очистка данных</h1>
+<p class="forms-text">Внимание! Это приведет к полному удалению данных!
+    <br>Введите пароль, чтобы подтвердить удаление
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% for f in form %}
+    <div class="form-container"><label class="form-label">{{ f.label }}: </label>{{ f }}</div>
+    <div class="form-error">{{ f.errors }}</div>
+    <div class="button-containter">
+        <button type="submit" class="form-button-submit delete-button-submit">Подтвердить</button>
+    </div>
+    {% endfor %}
+    
+</form>
+</div>
+{% endblock %}

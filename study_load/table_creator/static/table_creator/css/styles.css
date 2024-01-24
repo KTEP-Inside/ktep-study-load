@@ -1,0 +1,422 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-size: 14px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  
+}
+
+/* main-table */
+
+
+.main-table {
+  border: 2px solid;
+  border-collapse: collapse;
+  margin: 15px;
+}
+
+.teacher {
+    width: 200px;
+    margin-left: 10px;
+    margin-right: 10px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.education_year{
+	width: 105px;
+	margin-left: 10px;
+	margin-right: 10px;
+	display: inline-block;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+tr td{
+  border: 2px solid black;
+}
+
+td {
+	height: 20px;
+	text-align: center;
+	font-weight: bold;
+  /* padding: 10px; */
+}
+
+.main-load td{
+  text-align: left;
+
+}
+
+
+.main-info, .main-load{
+  font-weight: 700;
+}
+
+table input {
+  width: 90%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border: none;
+  background-color: #EEEEEE;
+  text-align: center;
+  font-weight: bold;
+}
+
+.subject {
+  width: 150px;
+}
+
+
+select{
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 300;
+}
+
+option {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 300;
+}
+
+.button {
+  margin: 10px;
+  border: 2px solid #ffab40;
+  border-radius: 6px;
+  background-color: #ffab40;
+  width: 150px;
+  height: 40px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.main-menu {
+  background-color: #FFE5B4;
+  margin-bottom: 10px;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.main-menu-button {
+  background-color: #ffab40;
+  border: 2px solid #ffab40;
+  border-radius: 6px;
+  margin: 0px 10px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  width: 95px;
+  text-align: center;
+  height: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-menu-elem {
+  width: 120px;
+}
+
+.main-menu-elem a {
+  width: 91px;
+  height: 21px;
+}
+
+.clear-data {
+  width: 146px;
+  height: 36px;
+  background-color: #ff0000;
+  border: 2px solid #ff0000;
+  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.buttons-menu {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
+.demo-wrapper {
+  display: flex;
+}
+@media print {
+
+  .budget {
+    padding-left: 15px;
+    padding-right: 15px;
+    white-space: nowrap;
+  }
+  
+  .semester {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .buttons-menu {
+    display: none;
+  }
+
+  .demo-wrapper {
+    display: none;
+  }
+
+  .print-button {
+    display: none;
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+  
+  select {
+    font-weight: bold;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: transparent; /* Прозрачный фон */
+    border: none; /* Убираем рамку */
+    
+  }
+  
+  /* Добавляем кастомный стиль для Firefox */
+  @-moz-document url-prefix() {
+    select {
+      background: transparent; /* Прозрачный фон */
+      border: none; /* Убираем рамку */
+    }
+  }
+  .main-menu {
+    display: none;
+  }
+
+  .subject {
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: normal;
+  }
+
+  .education_year {
+    background: transparent; /* Прозрачный фон */
+    border: none;
+  }
+
+}
+.delete-row-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-direction: column;
+  
+}
+
+.delete-row-element {
+  margin: 0px 5px;
+}
+
+.delete-row-input {
+  width: 30px;
+}
+
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.sign {
+  margin-bottom: 10px;
+  margin-top: 30px;
+  margin-left: 10px;
+  font-size: 15px;
+}
+
+
+/* main button */
+
+.form-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.form-upload__label {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.form-upload__title {
+  max-width: 200px;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+}
+
+.form-upload__input {
+  font-size: 18px;
+  font-weight: 300;
+  font-family: inherit;
+}
+
+.form-upload__input::file-selector-button {
+  min-width: 190px;
+  margin-right: 30px;
+  padding: 9px 15px;
+  border: none;
+  border-radius: 6px;
+  font-weight: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#uploadForm_File {
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+#uploadForm_File,
+.form-upload__submit,
+.form-upload__container {
+  width: 360px;
+}
+
+.form-upload__submit {
+  display: block;
+  margin-top: 25px;
+  padding: 9px 15px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: #000000;
+  font-size: 18px;
+  font-weight: 300;
+  font-family: inherit;
+  transition: background-color 0.2s linear;
+}
+
+.form-upload__submit.active-button:hover {
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: background-color 0.2s linear;
+} 
+
+.form-upload__submit.active-button:focus-visible {
+  border: 2px solid #ffffff;
+  outline: none;
+}
+
+.form-upload__submit.active-button:focus {
+  border: 2px solid #ffffff;
+  outline: none;
+}
+
+.form-upload__submit_orange {
+  background-color: #ffab40;
+}
+/* success and error pages */
+
+.answer-message {
+  display: flex;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex-wrap: wrap;
+  justify-content: flex-start;;
+}
+
+.message-title {
+  font-size: 70px;
+  height: 20px;
+}
+.error-title {
+  color: red;
+}
+
+.success-title {
+  color: greenyellow;
+}
+
+.answer-text {
+  font-size: 60px;
+}
+
+
+.home-button {
+  text-decoration: none;
+  border: 2px solid #ffab40;
+  background-color: #ffab40;
+  border-radius: 8px;
+  font-size: 40px;
+  color: #000000;
+  display: flex;
+  width: 250px;
+  height: 70px;
+  justify-content: center;
+  align-items: center;
+  
+}
+
+.answer-message > .home-button {
+  margin: 0 auto;
+  text-align: center;
+}
+
+
+#loader-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    text-align: center;
+
+}
+#loader-container p {
+    font-size: 20px;
+}
+.loader {
+    border: 8px solid #f7f7f7;
+    border-top: 8px solid #ffab40;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    animation: spin 1s linear infinite;
+    margin: 20% auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+

@@ -1,0 +1,16 @@
+[
+  {
+    "model":"table_creator.Exam",
+    "pk": 1,
+    "fields": {
+      "exam": "Э"
+    }
+  },
+  {
+    "model":"table_creator.Exam",
+    "pk": 2,
+    "fields": {
+      "exam": "ДЗ"
+    }
+  }
+]

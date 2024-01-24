@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Teacher(models.Model):
@@ -9,42 +10,46 @@ class Teacher(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(viewname='teacher', kwargs={'teacher_id': self.pk})
+
 
 class Subject(models.Model):
     name = models.CharField(unique=True, max_length=100, verbose_name='Предмет')
     teachers = models.ManyToManyField(Teacher, through='TeacherHasSubject')
+    is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
     objects = models.Manager()
 
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(viewname='subject', kwargs={'subject_id': self.pk})
+
 
 class TeacherHasSubject(models.Model):
-    teacher_has_subject = models.IntegerField(primary_key=True)
+    teacher_has_subject = models.AutoField(primary_key=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
     objects = models.Manager()
 
+    def __str__(self):
+        return f"{self.teacher}: {self.subject}"
+
 
 class TypeLoad(models.Model):
 
-    types = [  # вынести в функцию для возможности быстрого изменения
-        ('Лекции', 'Лекции'),
-        ('Лабораторные работы', 'Лабораторные работы'),
-        ('Практические работы', 'Практические работы'),
-        ('Практика (УП/ПП)', 'Практика (УП/ПП)'),
-        ('Консультации', 'Консультации'),
-        ('Зачет, экзамен, контрольные работы', 'Зачет, экзамен, контрольные работы'),
-        ('Курсовой проект', 'Курсовой проект')
-    ]
-    name = models.CharField(choices=types, max_length=50, verbose_name='Тип нагрузки')
+    name = models.CharField(max_length=50, verbose_name='Тип нагрузки')
 
     objects = models.Manager()
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse(viewname='type_load', kwargs={'type_load_id': self.pk})
 
 
 class Semester(models.Model):
@@ -61,14 +66,37 @@ class Semester(models.Model):
         return self.number
 
 
+class Exam(models.Model):
+    class TypeExam(models.TextChoices):
+        exam = 'Э', 'Экзамен'
+        test = 'ДЗ', 'Зачёт'
+
+    exam = models.CharField(max_length=2)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return self.exam
+
+
 class HoursLoad(models.Model):
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     type_load = models.ForeignKey(TypeLoad, on_delete=models.CASCADE)
     group = models.ForeignKey('SpecialityHasCourse', on_delete=models.CASCADE)
     teacher_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-    hours = models.IntegerField(verbose_name='Часы')  # как взять ДЗ и Э
+    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)
+    exam = models.ForeignKey(Exam, on_delete=models.SET_NULL, null=True)
 
     objects = models.Manager()
+
+    def __str__(self):
+        if self.exam:
+            return f"{self.type_load} {self.group} {self.teacher_subject} {self.exam}"
+        else:
+            return f"{self.type_load} {self.group} {self.teacher_subject} {self.hours}"
+
+    class Meta:
+        unique_together = ['semester', 'type_load', 'group', 'teacher_subject']
 
 
 class Speciality(models.Model):
@@ -94,7 +122,7 @@ class Course(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.course
+        return f"{self.course}"
 
 
 class SpecialityHasCourse(models.Model):
@@ -102,8 +130,12 @@ class SpecialityHasCourse(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
     name_group = models.CharField(unique=True, max_length=50)
+    is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
     objects = models.Manager()
 
     def __str__(self):
         return self.name_group
+
+    def get_absolute_url(self):
+        return reverse(viewname='group', kwargs={'course_has_speciality': self.course_has_speciality})
