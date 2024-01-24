@@ -18,10 +18,11 @@ from .utils import *
 from .validators import *
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # подключение логирования
 
 
 class MainView(LoginRequiredMixin, View):
+    """главная страница"""
     template_name = 'table_creator/table_creator.html'
 
     @staticmethod
@@ -44,6 +45,7 @@ class MainView(LoginRequiredMixin, View):
 
 
 class GetGroupsView(LoginRequiredMixin, View):
+    """Получение списка групп"""
 
     def get(self, request, teacher_id):
         teacher_has_subj = TeacherHasSubject.objects.filter(
@@ -63,6 +65,7 @@ class GetGroupsView(LoginRequiredMixin, View):
 
 
 class GetSubjectsView(LoginRequiredMixin, View):
+    """Получение списка предметов"""
     def get(self, request, teacher_id, group_id):
         hours_load = HoursLoad.objects.filter(
             group_id=group_id
@@ -81,6 +84,7 @@ class GetSubjectsView(LoginRequiredMixin, View):
 
 
 class GetStudyLoadHoursView(LoginRequiredMixin, View):
+    """Получение часов учебной нагрузки"""
 
     def get(self, request, teacher_id, group_id, subject_id, type_load_id):
 
@@ -102,6 +106,7 @@ class GetStudyLoadHoursView(LoginRequiredMixin, View):
 
 
 class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    """Загрузка данных из файла в бд"""
     permission_required = 'table_creator.add_hoursload'
 
     def post(self, request):
@@ -119,6 +124,7 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
 
 
 class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    """Обновление ячейки в базе"""
     permission_required = 'table_creator.change_hoursload'
 
     @staticmethod
@@ -233,6 +239,7 @@ class ClearDataView(PermissionRequiredMixin, LoginRequiredMixin, FormMixin, View
 
 
 class ClearDataDoneView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    """Очистка базы"""
     template_name = 'table_creator/clear_data_done.html'
     permission_required = 'table_creator.delete_hoursload'
 
