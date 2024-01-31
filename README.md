@@ -6,10 +6,12 @@
 - 4 Сделать`env` и `env.prod.db`, заполнить по примеру
 - 5 Установить `DEBUG=0` перед запуском
 - 6`docker compose -f docker-compose.prod.yml up -d --build`
-- 7`docker compose exec web python manage.py migrate` (см. **Примечания**)
-- 8`docker compose exec web python manage.py loaddata course.json exam.json semester.json typeload.json`
-- 9`docker compose exec web python manage.py collectstatic`
-- 10`docker compose exec web python manage.py createsuperuser`
+- 7
+- 8`docker compose exec web python manage.py migrate` (см. **Примечания**)
+- 9`docker compose exec web python manage.py loaddata course.json exam.json semester.json typeload.json`
+- 10`docker compose exec web python manage.py collectstatic`
+- 11`docker compose exec web python manage.py createsuperuser`
+- изменить `EMAIL_HOST_USER` и `EMAIL_HOST_PASSWORD` в `.env`
 
 
 ### Примечания 
