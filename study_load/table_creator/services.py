@@ -1,7 +1,10 @@
+import logging
+
 import openpyxl
 from openpyxl.cell import Cell
 from openpyxl.worksheet.worksheet import Worksheet
 from .models import *
+logger = logging.getLogger(__name__)  # подключение логирования
 
 is_paid = False
 
@@ -11,12 +14,12 @@ def create_group(ws: Worksheet):
     global is_paid
 
     try:
-        speciality = ' '.join(ws['A4'].value.split()[3:-1]).strip()  # специальность
-        name_group = ' '.join(ws['A4'].value.split()[3:])  # полная группа
+        speciality = ' '.join(ws['A3'].value.split()[3:-1]).strip()  # специальность
+        name_group = ' '.join(ws['A3'].value.split()[3:])  # полная группа
     except AttributeError:
         return 'Неверный шаблон'
 
-    if ws['A4'].value.split()[-2][-1] == 'п':  # проверка на платную группу
+    if ws['A3'].value.split()[-2][-1] == 'п':  # проверка на платную группу
         is_paid = True
 
     num_course = Course.objects.get(pk=int(ws.title[0]))
@@ -49,21 +52,24 @@ def create_table(ws: Worksheet,
         else:
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip())[0]
 
-        for teacher in teachers.value.split(','):
+        for teacher_id, teacher in enumerate(teachers.value.split(',')):
+
             teacher_obj = Teacher.objects.get_or_create(name=teacher)[0]
             teacher_subject = TeacherHasSubject.objects.get_or_create(teacher=teacher_obj,
                                                                       subject=subject_obj)[0]
 
             create_type_load(ws, subject=subject,
-                             group=group, teacher_subject=teacher_subject)
+                             group=group, teacher_subject=teacher_subject, teacher_id=teacher_id)
+
 
 
 def create_type_load(ws: Worksheet,
                      subject: Cell,
                      group: SpecialityHasCourse,
-                     teacher_subject: TeacherHasSubject):
+                     teacher_subject: TeacherHasSubject,
+                     teacher_id):
     """Тип нагрузки и вызов создания записей по семестрам"""
-    for load in ws.iter_cols(min_col=4, min_row=5, max_row=5):  # все типы нагрузки
+    for load in ws.iter_cols(min_col=4, min_row=4, max_row=4):  # все типы нагрузки
 
         if load[0].value is not None:  # Если есть значение
 
@@ -75,7 +81,8 @@ def create_type_load(ws: Worksheet,
 
                     semester_load_writer(ws, load=load, subject=subject,
                                          group=group, type_load_obj=type_load_obj,
-                                         teacher_subject=teacher_subject)
+                                         teacher_subject=teacher_subject,
+                                         teacher_id=teacher_id)
         else:
 
             continue
@@ -86,7 +93,8 @@ def semester_load_writer(ws: Worksheet,
                          subject: Cell,
                          group: SpecialityHasCourse,
                          teacher_subject: TeacherHasSubject,
-                         type_load_obj: TypeLoad):
+                         type_load_obj: TypeLoad,
+                         teacher_id):
     """Валидация и итоговые записи"""
 
     semester = 1
@@ -96,13 +104,13 @@ def semester_load_writer(ws: Worksheet,
         semester_obj = Semester.objects.get(pk=semester)  # получаем номер семестра
 
         # возможно убрать, в шаблоне вроде не будет merge ячеек
-        cur_cell = check_merge_cell(ws, cell)  # проверка на merge и взятие значение
+        cur_cell = check_merge_cell(ws, cell, teacher_id)  # проверка на merge и взятие значение
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
                     group=group, teacher_subject=teacher_subject)
         semester += 1
 
 
-def check_merge_cell(ws: Worksheet, cell) -> str | int | float:
+def check_merge_cell(ws: Worksheet, cell, teacher_id) -> str | int | float:
     """Проверка на mergecell"""
     main_cell = False  # вынос в функцию
 
@@ -113,6 +121,16 @@ def check_merge_cell(ws: Worksheet, cell) -> str | int | float:
 
     if main_cell:  # если не главная ячейка
         cur_cell = main_cell
+    else:
+        cur_cell = check_multi_value(cell, teacher_id)
+    return cur_cell
+
+
+def check_multi_value(cell, teacher_id):
+    if ',' in str(cell[0].value) and teacher_id <= len(cell[0].value.split(',')) - 1:
+        cur_cell = cell[0].value.split(',')[teacher_id]
+        if cur_cell.strip().isdigit():
+            cur_cell = int(cur_cell)
     else:
         cur_cell = cell[0].value
 
@@ -147,7 +165,7 @@ def main_func(ws: Worksheet):
     group = create_group(ws)
 
     # получаем преподавателей + их предмет
-    for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=8):
+    for subject, teachers in ws.iter_rows(min_col=2, max_col=3, min_row=7):
         create_table(ws, subject=subject, teachers=teachers, group=group)
 
 
