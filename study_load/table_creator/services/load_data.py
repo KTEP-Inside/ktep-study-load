@@ -3,7 +3,9 @@ import logging
 import openpyxl
 from openpyxl.cell import Cell
 from openpyxl.worksheet.worksheet import Worksheet
-from .models import *
+
+from ..models import *
+
 logger = logging.getLogger(__name__)  # подключение логирования
 
 is_paid = False
@@ -53,14 +55,12 @@ def create_table(ws: Worksheet,
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip())[0]
 
         for teacher_id, teacher in enumerate(teachers.value.split(',')):
-
-            teacher_obj = Teacher.objects.get_or_create(name=teacher)[0]
+            teacher_obj = Teacher.objects.get_or_create(name=teacher.strip())[0]
             teacher_subject = TeacherHasSubject.objects.get_or_create(teacher=teacher_obj,
                                                                       subject=subject_obj)[0]
 
             create_type_load(ws, subject=subject,
                              group=group, teacher_subject=teacher_subject, teacher_id=teacher_id)
-
 
 
 def create_type_load(ws: Worksheet,
@@ -148,15 +148,22 @@ def create_load(cur_cell: str | int | float,
     if not isinstance(cur_cell, int) and cur_cell not in ['ДЗ', 'Э']:
         cur_cell = 0
 
+    kwargs = {'semester': semester_obj,
+              'type_load': type_load_obj,
+              'group': group,
+              'teacher_subject': teacher_subject}
+
     if cur_cell in ['ДЗ', 'Э']:
         exam_obj = Exam.objects.get(exam=cur_cell)  # берем ДЗ или Э
-        HoursLoad.objects.get_or_create(semester=semester_obj, type_load=type_load_obj,
-                                        group=group, teacher_subject=teacher_subject,
-                                        exam=exam_obj)  # создаем запись нагрузки
+        data = HoursLoad.objects.get_or_create(**kwargs)[0]  # создаем запись нагрузки
+        data.exam = exam_obj
+        data.hours = None
+        data.save()
     else:
-        HoursLoad.objects.get_or_create(semester=semester_obj, type_load=type_load_obj,
-                                        group=group, teacher_subject=teacher_subject,
-                                        hours=cur_cell)  # создаем запись нагрузки
+        data = HoursLoad.objects.get_or_create(**kwargs)[0]  # создаем запись нагрузки
+        data.hours = cur_cell
+        data.exam = None
+        data.save()
 
 
 def main_func(ws: Worksheet):
@@ -169,7 +176,7 @@ def main_func(ws: Worksheet):
         create_table(ws, subject=subject, teachers=teachers, group=group)
 
 
-def add_data(file):
+def load_data(file):
     global is_paid
     wb = openpyxl.load_workbook(file)  # открываем файл
     all_sheets = wb.sheetnames  # все листы

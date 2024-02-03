@@ -1,10 +1,12 @@
 import json
 import logging
+import mimetypes
+from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -12,7 +14,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.views.generic.edit import FormMixin
 
 from .forms import ClearDataForm
-from .services import add_data
+from .services.load_data import load_data
+from .services.create_report import create_excel_report_data
 from .models import *
 from .utils import *
 from .validators import *
@@ -113,14 +116,34 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
 
         if 'file_name' in request.FILES:
             uploaded_file = request.FILES['file_name']
-            try:
-                add_data(uploaded_file)
-                return redirect('upload-success')
+            # try:
+            load_data(uploaded_file)
+            return redirect('upload-success')
+            #
+            # except Exception as e:
+            #     return redirect('upload-error')
 
-            except Exception as e:
-                return redirect('upload-error')
+        # return redirect('upload-error')
 
-        return redirect('upload-error')
+
+class CreateExcelReportView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    """сохраняем получившийся отчет в базе"""
+    permission_required = 'table_creator.change_hoursload'
+
+    def post(self, request):
+
+        data = json.loads(request.body)['val']
+
+        output = BytesIO()
+        wb, filename = create_excel_report_data(data)
+        wb.save(output)
+        output.seek(0)
+
+        mime_type = mimetypes.guess_type(f'{filename}.xlsx')[0]
+        response = FileResponse(output, content_type=mime_type)
+        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+
+        return response
 
 
 class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
