@@ -6,17 +6,17 @@
 
 {% block content %}
 
-<table class="main-table">
+<table class="main-table" id="main-table">
   <thead class="main-load">
     <tr>
-      <td colspan="24">Педагогическая нагрузка
+      <td colspan="24" class="teacher-load">Педагогическая нагрузка
       <select id="teacher" class="teacher" name="teacher">
           <option value="" selected disabled></option>
           {% for teacher in teachers %}
             <option value="{{ teacher.pk }}">{{ teacher }}</option>
           {% endfor %}
       </select>
-        <input type="text" id="year" name="year" class="education_year">
+        <div id="year" class="education_year"></div>
       </td>
     </tr>
   </thead>
@@ -45,11 +45,11 @@
   <tfoot id="table_results">
     {% for budget in type_results %}
     <tr>
-      <td colspan="2">{{ budget }}</td>
+      <td colspan="2" class="budget-info">{{ budget }}</td>
       <td colspan="19"></td>
-      <td><input type="text" id="budget_sum_{{ forloop.counter }}" value="0" disabled></td>
-      <td><input type="text" id="extra_budget_sum_{{ forloop.counter }}" value="0" disabled></td>
-      <td><input type="text" id="budget_result_{{ forloop.counter }}" value="0" disabled></td>
+      <td><input class="res-budget-elem" type="text" id="budget_sum_{{ forloop.counter }}" value="0" disabled></td>
+      <td><input class="res-budget-elem" type="text" id="extra_budget_sum_{{ forloop.counter }}" value="0" disabled></td>
+      <td><input class="res-budget-elem" type="text" id="budget_result_{{ forloop.counter }}" value="0" disabled></td>
     </tr>
     {% endfor %}
   </tfoot>
@@ -68,7 +68,8 @@
 
 {% if perms.table_creator.delete_hoursload %}
 <div><a href="{% url 'clear_data' %}" class="button clear-data">Очистить данные</a></div>
-{% endif %}
+<div><button class="download-button button" id="download-data">Сохранить</button></div>
+  {% endif %}
 {% if perms.table_creator.add_hoursload %}
 <div class="demo-wrapper">
   <form

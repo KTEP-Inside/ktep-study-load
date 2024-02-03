@@ -18,4 +18,6 @@ urlpatterns = [
 
     path('clear-data/', ClearDataView.as_view(), name='clear_data'),
     path('clear-data/done/', ClearDataDoneView.as_view(), name='clear_data_done'),
+
+    path('download-data/', CreateExcelReportView.as_view(), name='download_data')
 ]

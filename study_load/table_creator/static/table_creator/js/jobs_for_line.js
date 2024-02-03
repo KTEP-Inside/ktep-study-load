@@ -99,7 +99,6 @@ function deleteRow() {
        let teacherSelect = document.getElementById('teacher');
        let selectedTeacherId = teacherSelect.value;
        // Очищаем текущие опции и добавляем по умолчанию пустой вариант
-
         cur_row.innerHTML = '<option value="" selected disabled></option>';
 
         if (selectedTeacherId) {
@@ -126,12 +125,14 @@ function deleteRow() {
 }
 
 function deductFromBudget(budget, extraBudget, totalBudget) {
-    document.getElementById('extra_budget_sum_1').value -= extraBudget;
-    document.getElementById('extra_budget_sum_3').value -= extraBudget;
-    document.getElementById('budget_sum_1').value -= budget;
-    document.getElementById('budget_sum_3').value -= budget;
-    document.getElementById('budget_result_1').value -= totalBudget;
-    document.getElementById('budget_result_3').value -= totalBudget;
+    // убираем дублирование
+    document.getElementById('extra_budget_sum_1').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_1').value) - extraBudget);
+    document.getElementById('extra_budget_sum_3').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_3').value) - extraBudget);
+    document.getElementById('budget_sum_1').setAttribute('value', parseInt(document.getElementById('budget_sum_1').value) - budget);
+    document.getElementById('budget_sum_3').setAttribute('value', parseInt(document.getElementById('budget_sum_3').value) - budget);
+    document.getElementById('budget_result_1').setAttribute('value', parseInt(document.getElementById('budget_result_1').value) - totalBudget);
+    document.getElementById('budget_result_3').setAttribute('value', parseInt(document.getElementById('budget_result_3').value) - totalBudget);
+
 }
 
 document.addEventListener('DOMContentLoaded', function() {

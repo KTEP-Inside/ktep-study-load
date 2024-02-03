@@ -98,6 +98,11 @@ option {
   cursor: pointer;
 }
 
+.download-button {
+  border: 2px solid #40ff50;
+  background-color: #40ff50;
+}
+
 .main-menu {
   background-color: #FFE5B4;
   margin-bottom: 10px;
