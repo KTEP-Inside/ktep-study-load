@@ -108,7 +108,9 @@
 
 <script src="{% static 'table_creator/js/print.js' %}"></script>
 <script src="{% static 'table_creator/js/file_jobs.js' %}"></script>
-<script src="{% static 'table_creator/js/get_data.js' %}"></script>
-<script src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
+<script type="module" src="{% static 'table_creator/js/get_data.js' %}"></script>
+<script type="module" src="{% static 'table_creator/js/jobs_for_line.js' %}"></script>
 <script src="{% static 'table_creator/js/create_year.js' %}"></script>
+<script type="module" src="{% static 'table_creator/js/cookie-utils.js' %}"></script>
+
 {% endblock %}
