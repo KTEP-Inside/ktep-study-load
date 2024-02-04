@@ -1,6 +1,7 @@
+import { getCookie } from './cookie-utils.js';
 let typeLoadElements = document.querySelectorAll(".type_load");
 
-function addRow() {
+function addRow(flag=true) {
      // Функция, которая создает новую строку в таблице
         let table = document.getElementById('table_body');
         let rowCount = table.rows.length;
@@ -11,12 +12,12 @@ function addRow() {
         rowCount = rowCount + 1;
         cell1.innerHTML = `<span class="row-number">${rowCount}</span>`;
 
-        let cell3 = row.insertCell(1);
-        cell3.innerHTML = '<select id="subject_' + rowCount + '" class="subject" name="subject_' + rowCount + '" ></select>';
+        let cell2 = row.insertCell(1);
+        cell2.innerHTML = '<select id="subject_' + rowCount + '" class="subject" name="subject_' + rowCount + '" ></select>';
 
-        let cell4 = row.insertCell(2);
-        cell4.innerHTML = '<select id="group_' + rowCount + '" class="group" name="group_' + rowCount + '"></select>';
-        let groupSelect = cell4.querySelector('select');
+        let cell3 = row.insertCell(2);
+        cell3.innerHTML = '<select id="group_' + rowCount + '" class="group" name="group_' + rowCount + '"></select>';
+        let groupSelect = cell3.querySelector('select');
 
         typeLoadElements.forEach(function(typeLoad){
             for (let semester = 1; semester < 3; semester++) {
@@ -33,10 +34,15 @@ function addRow() {
         }
 
         updateGroup(groupSelect)
+        if (flag) {
+            return groupSelect;
+        }
+
         
 }
 
 function deleteRow() {
+
     let table = document.getElementById('table_body');
     let rowNumberInput = document.getElementById('row_number_input');
     let rowDelete = parseInt(rowNumberInput.value, 10);
@@ -49,7 +55,38 @@ function deleteRow() {
         let totalBudget = curDelRow[curDelRow.length - 3].getElementsByTagName('input')[0].value;
         
         deductFromBudget(budget, extraBudget, totalBudget);
+        
 
+        const selectedTeacherId = document.getElementById('teacher').value;
+
+        
+        const curGroup = document.getElementById(`group_${rowDelete}`);
+        const curSubject = document.getElementById(`subject_${rowDelete}`);
+
+        const curGroupId = curGroup.options[curGroup.selectedIndex].value;
+        
+        if (selectedTeacherId && curGroupId) {
+        const curSubjectId = curSubject.options[curSubject.selectedIndex].value;
+            if (curSubjectId){
+            
+                fetch(`/delete-teacher-row-state/${selectedTeacherId}/${curGroupId}/${curSubjectId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        console.error('Ошибка при удалении записи состояния');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка запроса:', error);
+                });
+            };
+        };
         table.deleteRow(rowDelete - 1);
 
 
@@ -125,7 +162,6 @@ function deleteRow() {
 }
 
 function deductFromBudget(budget, extraBudget, totalBudget) {
-    // убираем дублирование
     document.getElementById('extra_budget_sum_1').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_1').value) - extraBudget);
     document.getElementById('extra_budget_sum_3').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_3').value) - extraBudget);
     document.getElementById('budget_sum_1').setAttribute('value', parseInt(document.getElementById('budget_sum_1').value) - budget);
@@ -135,6 +171,20 @@ function deductFromBudget(budget, extraBudget, totalBudget) {
 
 }
 
+function clearTable() {
+    const table = document.getElementById('table_body');
+    while (table.rows.length > 0) {
+        table.deleteRow(-1);
+    };
+};
+
+function clearBudget() {
+    for (let i = 1; i < 4; i++) {
+        document.getElementById(`extra_budget_sum_${i}`).setAttribute('value', 0);
+        document.getElementById(`budget_result_${i}`).setAttribute('value', 0);
+        document.getElementById(`budget_sum_${i}`).setAttribute('value', 0);
+    };
+};
 document.addEventListener('DOMContentLoaded', function() {
     let buttonAddRow = document.getElementById('add_row');
     let buttonDeleteRow = document.getElementById('delete_row');
@@ -148,3 +198,5 @@ document.addEventListener('DOMContentLoaded', function() {
     })
 
 });
+
+export { addRow, clearTable, clearBudget };

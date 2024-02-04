@@ -1,3 +1,6 @@
+import { getCookie } from './cookie-utils.js';
+import { addRow, clearTable, clearBudget } from './jobs_for_line.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     
     let teacherSelect = document.getElementById('teacher');
@@ -6,14 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let tableResults = document.getElementById('table_results');
     const downloadButton = document.getElementById('download-data');
 
-    teacherSelect.addEventListener('input', updateGroups);
+    teacherSelect.addEventListener('input', getDataForTeacher);
 
     mainTable.addEventListener('input', function (event) {
         const target = event.target;
 
         // Проверяем, является ли элемент с классом 'group'
         if (target.classList.contains('group')) {
-            onGroupElementChange.call(target, event);
+            onGroupElementChange.call(target);
         } 
         // Проверяем, является ли элемент с классом 'subject'
         else if (target.classList.contains('subject')) {
@@ -121,90 +124,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function getDataForTeacher() {
+        let teacherId = teacherSelect.options[teacherSelect.selectedIndex].value;
+        clearTable();
+        clearBudget();
+        fetch(`get-all-data-for-teacher/${teacherId}/`)
+        .then(response => response.json())
+        .then(data => {
+            data.data.forEach(function (teacherData) {
+                let curGroup = addRow(true);
+                curGroup.options[curGroup.selectedIndex].value = teacherData.group;
+                curGroup.options[curGroup.selectedIndex].innerText = teacherData.name_group;
+                curGroup.options[curGroup.selectedIndex].setAttribute('data-is-paid', teacherData.group_is_paid);
 
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                // Ищем куки с нужным именем
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+                setTeacherElementAndDocTitle();
+                let curSubject = onGroupElementChange.call(curGroup, true);
+                curSubject.options[curSubject.selectedIndex].value = teacherData.subject_id;
+                curSubject.options[curSubject.selectedIndex].innerText = teacherData.subject_name;
+                curSubject.options[curSubject.selectedIndex].setAttribute('data-is-paid', teacherData.subject_is_paid);
+                
+                onSubjectElementChange.call(curSubject);
+            });
+        });
+    };
 
-    function updateGroups() {
-        let selectedTeacherId = teacherSelect.value;
-
+    function setTeacherElementAndDocTitle() {
         let selectedValue = teacherSelect.options[teacherSelect.selectedIndex];
         let firstOption = teacherSelect.options[0];
         firstOption.value = selectedValue.value;
         firstOption.innerText = selectedValue.innerText;
-
-        let groupElements = document.querySelectorAll('.group');
-        let subjectElements = document.querySelectorAll('.subject');
         document.title = teacherSelect.options[teacherSelect.selectedIndex].text;
-
-        if (mainTable.rows.length >= 1) {
-            for (let rowIdx = 0; rowIdx < mainTable.rows.length; rowIdx++) {
-
-                let row = mainTable.rows[rowIdx];
-                let cells = row.cells;
-                let last = typeLoadElements.length * 2 + 3 + 3;
-
-                for (let j = 3; j < last; j++) {
-                    cells[j].getElementsByTagName('input')[0].setAttribute('value', 0);
-                    cells[j].getElementsByTagName('input')[0].disabled = true;
-                }
-            }
-            for (let rowIdx = 0; rowIdx < tableResults.rows.length; rowIdx++) {
-                let row = tableResults.rows[rowIdx];
-                let cells = row.cells;
-    
-                for (let j = 2; j < 5; j++) {
-                    cells[j].getElementsByTagName('input')[0].setAttribute('value', 0);
-                    cells[j].getElementsByTagName('input')[0].disabled = true;
-                }
-            }
-        };
-
-
-        subjectElements.forEach(function(subjectElement) {
-             subjectElement.innerHTML = '<option value="" selected disabled></option>';
-             subjectElement.disabled = true;
-        });
-
-        groupElements.forEach(function(groupElement) {
-            groupElement.innerHTML = '<option value="" selected disabled></option>';
-
-            fetch(`/get-groups/${selectedTeacherId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(function(group) {
-                        let option = document.createElement('option');
-                        option.value = group.course_has_speciality;
-                        option.text = group.name_group;
-                        option.setAttribute('data-is-paid', group.is_paid);
-
-                        groupElement.add(option);
-                    });
-                    // Разблокировать селект
-                    groupElement.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error fetching groups:', error);
-                });
-        });
     }
 
-    function onGroupElementChange() {
+    function onGroupElementChange(flag=false) {
+        console.log(flag);
         let selectedTeacherId = teacherSelect.value;
         let selectedGroupId = this.value;
+
         let subjectId = 'subject_' + this.id.split('_')[1];
         let subjectElement = document.getElementById(subjectId);
         
@@ -231,11 +187,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error fetching subjects:', error);
         });
-
+        
+        if (flag) {
+            return subjectElement;
+        }
     }
 
     function onSubjectElementChange() {
         
+        console.log(this);
         let rowId = this.id.split('_')[1];
         let selectedTeacherId = teacherSelect.value;
         let selectedSubjectId = this.value;
@@ -265,10 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById(semesterId).disabled = false;
                         semester++;
                     });
-                // for (let i = 1; i < 3; i++) {
-                //     let semesterId = `type-load_${rowId}_${typeLoad.id}_${i}`;
-                //     document.getElementById(semesterId).disabled = false;
-                // }
                 })
                 .catch(error => {
                     console.error('Error fetching subjects:', error);
@@ -279,6 +235,23 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
                 let budget_sum = createCurrentBudget(rowId - 1);
                 setCurrentBudget(rowId - 1, budget_sum);
+        });
+
+        fetch(`/create-teacher-row-state/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'error') {
+                console.error('Ошибка создания записи');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка запроса:', error);
         });
     };
 
@@ -291,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createCurrentBudget(rowId) { 
         let budget_sum = 0;
         let cells = mainTable.rows[rowId].cells;
-        for (i = 3; i < typeLoadElements.length * 2 + 3; i++) {
+        for (let i = 3; i < typeLoadElements.length * 2 + 3; i++) {
             
             let num = parseInt(cells[i].getElementsByTagName('input')[0].value);
             if (!isNaN(num)) {
@@ -350,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('budget_result_1').setAttribute('value', newTotalBudget);
         document.getElementById('budget_result_3').setAttribute('value', newTotalBudget);
     }
-
 });
 
  

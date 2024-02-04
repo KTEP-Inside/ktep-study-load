@@ -19,5 +19,11 @@ urlpatterns = [
     path('clear-data/', ClearDataView.as_view(), name='clear_data'),
     path('clear-data/done/', ClearDataDoneView.as_view(), name='clear_data_done'),
 
-    path('download-data/', CreateExcelReportView.as_view(), name='download_data')
+    path('download-data/', CreateExcelReportView.as_view(), name='download_data'),
+
+    path('create-teacher-row-state/<int:teacher_id>/<int:group_id>/<int:subject_id>/',
+         CreateStateTeacherRowView.as_view(), name='create-teacher-row-state'),
+    path('delete-teacher-row-state/<int:teacher_id>/<int:group_id>/<int:subject_id>/',
+         DeleteStateTeacherRowView.as_view(), name='delete-teacher-row-state'),
+    path('get-all-data-for-teacher/<int:teacher_id>/', GetAllDataForTeacher.as_view(), name='getAllDataForTeacher')
 ]
