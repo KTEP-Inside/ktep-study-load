@@ -3,7 +3,7 @@ from django.urls import reverse
 
 
 class Teacher(models.Model):
-    name = models.CharField(unique=True, max_length=60, verbose_name='ФИО преподавателя')
+    name = models.CharField(unique=True, max_length=70, verbose_name='ФИО преподавателя')
 
     objects = models.Manager()
 
@@ -15,7 +15,7 @@ class Teacher(models.Model):
 
 
 class Subject(models.Model):
-    name = models.CharField(unique=True, max_length=100, verbose_name='Предмет')
+    name = models.CharField(unique=True, max_length=200, verbose_name='Предмет')
     teachers = models.ManyToManyField(Teacher, through='TeacherHasSubject')
     is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
@@ -32,7 +32,6 @@ class TeacherHasSubject(models.Model):
     teacher_has_subject = models.AutoField(primary_key=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-
     objects = models.Manager()
 
     def __str__(self):
@@ -100,7 +99,7 @@ class HoursLoad(models.Model):
 
 
 class Speciality(models.Model):
-    name = models.CharField(unique=True, max_length=15, verbose_name='Специальность')
+    name = models.CharField(unique=True, max_length=30, verbose_name='Специальность')
 
     objects = models.Manager()
 
@@ -129,8 +128,9 @@ class SpecialityHasCourse(models.Model):
     course_has_speciality = models.AutoField(primary_key=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
-    name_group = models.CharField(unique=True, max_length=50)
+    name_group = models.CharField(unique=True, max_length=60)
     is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
+    teacher_table_state = models.ManyToManyField(TeacherHasSubject, 'StateTeacherRow')
 
     objects = models.Manager()
 
@@ -139,3 +139,13 @@ class SpecialityHasCourse(models.Model):
 
     def get_absolute_url(self):
         return reverse(viewname='group', kwargs={'course_has_speciality': self.course_has_speciality})
+
+
+class StateTeacherRow(models.Model):
+    group = models.ForeignKey(SpecialityHasCourse, on_delete=models.CASCADE)
+    teacher_has_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'{self.group}, {self.teacher_has_subject}'

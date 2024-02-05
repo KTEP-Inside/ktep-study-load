@@ -36,3 +36,7 @@ class SpecialityHasCourseAdmin(admin.ModelAdmin):
 @admin.register(HoursLoad)
 class HoursLoadAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(StateTeacherRow)
+class StateTeacherRowAdmin(admin.ModelAdmin):
+    pass

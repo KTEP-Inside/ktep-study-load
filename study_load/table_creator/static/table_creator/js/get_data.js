@@ -1,18 +1,22 @@
+import { getCookie } from './cookie-utils.js';
+import { addRow, clearTable, clearBudget } from './jobs_for_line.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     
     let teacherSelect = document.getElementById('teacher');
     let mainTable = document.getElementById('table_body');
     let typeLoadElements = document.querySelectorAll(".type_load");
     let tableResults = document.getElementById('table_results');
+    const downloadButton = document.getElementById('download-data');
 
-    teacherSelect.addEventListener('input', updateGroups);
+    teacherSelect.addEventListener('input', getDataForTeacher);
 
     mainTable.addEventListener('input', function (event) {
         const target = event.target;
 
         // Проверяем, является ли элемент с классом 'group'
         if (target.classList.contains('group')) {
-            onGroupElementChange.call(target, event);
+            onGroupElementChange.call(target);
         } 
         // Проверяем, является ли элемент с классом 'subject'
         else if (target.classList.contains('subject')) {
@@ -31,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let regex = /(\d+)/g;
             let matches = row.match(regex);
             let rowid = matches[0];
-            let prevVal = document.getElementById(row).value
+            let newVal = document.getElementById(row).value;
 
             
             // вызов отправки данных django
@@ -44,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let url = `update-hours/${teacherSelect}/${groupSelect}/${subjectSelect}/${typeLoadSelect}/${semesterSelect}/`
 
             let data = {
-                val: prevVal
+                val: newVal
             }
             let requestOptions = {
                 method: 'PUT',
@@ -65,12 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status == 'success') {
                     onChangeHours.call(target, rowid, event);
-                    
+                    document.getElementById(row).setAttribute('value', newVal);
                 } else if (data.status == 'validation-error') {
                     alert(data.message);
-                    document.getElementById(row).value = data.data;
+                    document.getElementById(row).setAttribute('value', data.data);
                 } else {
-                    document.getElementById(row).value = data.data;
+                    document.getElementById(row).setAttribute('value', data.data);
+
                 }
 
             })
@@ -80,85 +85,90 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                // Ищем куки с нужным именем
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    downloadButton.addEventListener('click', function(event) {
+        const year = document.getElementById('year').innerText;
+        const teacher = teacherSelect.options[teacherSelect.selectedIndex].innerText;
+        let data = {
+            val: document.documentElement.innerHTML,
         }
-        return cookieValue;
-    }
 
-    function updateGroups() {
-        let selectedTeacherId = teacherSelect.value;
-        let groupElements = document.querySelectorAll('.group');
-        let subjectElements = document.querySelectorAll('.subject');
-        document.title = teacherSelect.options[teacherSelect.selectedIndex].text;
-
-        if (mainTable.rows.length >= 1) {
-            for (let rowIdx = 0; rowIdx < mainTable.rows.length; rowIdx++) {
-
-                let row = mainTable.rows[rowIdx];
-                let cells = row.cells;
-                let last = typeLoadElements.length * 2 + 3 + 3;
-
-                for (let j = 3; j < last; j++) {
-                    cells[j].getElementsByTagName('input')[0].value = 0;
-                    cells[j].getElementsByTagName('input')[0].disabled = true;
-                }
-            }
-            for (let rowIdx = 0; rowIdx < tableResults.rows.length; rowIdx++) {
-                let row = tableResults.rows[rowIdx];
-                let cells = row.cells;
-    
-                for (let j = 2; j < 5; j++) {
-                    cells[j].getElementsByTagName('input')[0].value = 0;
-                    cells[j].getElementsByTagName('input')[0].disabled = true;
-                }
-            }
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify(data)
         };
+        
+        if (teacher) {
+            fetch('download-data/', requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка соединения');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${teacher}-${year}.xlsx`;  // Имя файла для скачивания
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);  // Освобождение ресурсов
+            })
+            .catch(error => console.error('Error:', error));
+        } else {
+            alert('Выберите преподавателя!');
+        }
+    });
 
+    function getDataForTeacher() {
+        let teacherId = teacherSelect.options[teacherSelect.selectedIndex].value;
+        clearTable();
+        clearBudget();
+        fetch(`get-all-data-for-teacher/${teacherId}/`)
+        .then(response => response.json())
+        .then(data => {
+            data.data.forEach(function (teacherData) {
+                let curGroup = addRow(true);
+                curGroup.options[curGroup.selectedIndex].value = teacherData.group;
+                curGroup.options[curGroup.selectedIndex].innerText = teacherData.name_group;
+                curGroup.options[curGroup.selectedIndex].setAttribute('data-is-paid', teacherData.group_is_paid);
 
-        subjectElements.forEach(function(subjectElement) {
-             subjectElement.innerHTML = '<option value="" selected disabled></option>';
-             subjectElement.disabled = true;
+                setTeacherElementAndDocTitle();
+                let curSubject = onGroupElementChange.call(curGroup, true);
+                curSubject.options[curSubject.selectedIndex].value = teacherData.subject_id;
+                curSubject.options[curSubject.selectedIndex].innerText = teacherData.subject_name;
+                curSubject.options[curSubject.selectedIndex].setAttribute('data-is-paid', teacherData.subject_is_paid);
+                
+                onSubjectElementChange.call(curSubject);
+            });
         });
+    };
 
-        groupElements.forEach(function(groupElement) {
-            groupElement.innerHTML = '<option value="" selected disabled></option>';
-
-            fetch(`/get-groups/${selectedTeacherId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(function(group) {
-                        let option = document.createElement('option');
-                        option.value = group.course_has_speciality;
-                        option.text = group.name_group;
-                        option.setAttribute('data-is-paid', group.is_paid);
-
-                        groupElement.add(option);
-                    });
-                    // Разблокировать селект
-                    groupElement.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error fetching groups:', error);
-                });
-        });
+    function setTeacherElementAndDocTitle() {
+        let selectedValue = teacherSelect.options[teacherSelect.selectedIndex];
+        let firstOption = teacherSelect.options[0];
+        firstOption.value = selectedValue.value;
+        firstOption.innerText = selectedValue.innerText;
+        document.title = teacherSelect.options[teacherSelect.selectedIndex].text;
     }
 
-    function onGroupElementChange() {
+    function onGroupElementChange(flag=false) {
+        console.log(flag);
         let selectedTeacherId = teacherSelect.value;
         let selectedGroupId = this.value;
+
         let subjectId = 'subject_' + this.id.split('_')[1];
         let subjectElement = document.getElementById(subjectId);
+        
+        let groupSelected = document.getElementById('group_' + this.id.split('_')[1])
+        let selectedValue = groupSelected.options[groupSelected.selectedIndex];
+        let firstOption = groupSelected.options[0];
+        firstOption.value = selectedValue.value;
+        firstOption.innerText = selectedValue.innerText;
 
         subjectElement.innerHTML = '<option value="" selected disabled></option>';
         fetch(`/get-subjects/${selectedTeacherId}/${selectedGroupId}/`)
@@ -177,16 +187,26 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error fetching subjects:', error);
         });
-
+        
+        if (flag) {
+            return subjectElement;
+        }
     }
 
     function onSubjectElementChange() {
         
+        console.log(this);
         let rowId = this.id.split('_')[1];
         let selectedTeacherId = teacherSelect.value;
         let selectedSubjectId = this.value;
         let groupId = `group_${rowId}`;
         let selectedGroupId = document.getElementById(groupId).value;
+
+        let subjectSelected = document.getElementById('subject_' + this.id.split('_')[1])
+        let selectedValue = subjectSelected.options[subjectSelected.selectedIndex];
+        let firstOption = subjectSelected.options[0];
+        firstOption.value = selectedValue.value;
+        firstOption.innerText = selectedValue.innerText;
 
         let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
             return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
@@ -201,14 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             semesterVal = hour_load.exam;
                         }
                         let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
-                        document.getElementById(semesterId).value = semesterVal;
+                        document.getElementById(semesterId).setAttribute('value', semesterVal);
                         document.getElementById(semesterId).disabled = false;
                         semester++;
                     });
-                // for (let i = 1; i < 3; i++) {
-                //     let semesterId = `type-load_${rowId}_${typeLoad.id}_${i}`;
-                //     document.getElementById(semesterId).disabled = false;
-                // }
                 })
                 .catch(error => {
                     console.error('Error fetching subjects:', error);
@@ -219,6 +235,23 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
                 let budget_sum = createCurrentBudget(rowId - 1);
                 setCurrentBudget(rowId - 1, budget_sum);
+        });
+
+        fetch(`/create-teacher-row-state/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'error') {
+                console.error('Ошибка создания записи');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка запроса:', error);
         });
     };
 
@@ -231,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createCurrentBudget(rowId) { 
         let budget_sum = 0;
         let cells = mainTable.rows[rowId].cells;
-        for (i = 3; i < typeLoadElements.length * 2 + 3; i++) {
+        for (let i = 3; i < typeLoadElements.length * 2 + 3; i++) {
             
             let num = parseInt(cells[i].getElementsByTagName('input')[0].value);
             if (!isNaN(num)) {
@@ -250,14 +283,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let dataIsPaidValueGroup = selectedOptionGroup.getAttribute('data-is-paid');
         
         if (dataIsPaidValueSubject === 'true' | dataIsPaidValueGroup === 'true') {
-            document.getElementById(`budget_0_${rowId+1}`).value = 0;
-            document.getElementById(`budget_1_${rowId+1}`).value = budget_sum;
+            document.getElementById(`budget_0_${rowId+1}`).setAttribute('value', 0);
+            document.getElementById(`budget_1_${rowId+1}`).setAttribute('value', budget_sum);
         } else {
-            document.getElementById(`budget_0_${rowId+1}`).value = budget_sum;
-            document.getElementById(`budget_1_${rowId+1}`).value = 0;
+            document.getElementById(`budget_0_${rowId+1}`).setAttribute('value', budget_sum);
+            document.getElementById(`budget_1_${rowId+1}`).setAttribute('value', 0);
         }
 
-        document.getElementById(`budget_2_${rowId+1}`).value = budget_sum;
+        document.getElementById(`budget_2_${rowId+1}`).setAttribute('value', budget_sum);
         changeResults(dataIsPaidValueSubject, dataIsPaidValueGroup);
     }
     
@@ -272,26 +305,24 @@ document.addEventListener('DOMContentLoaded', function() {
             extraBudgetElements.forEach(function(element) {
                 newExtraBudget += parseInt(element.value);
             });
-            document.getElementById('extra_budget_sum_1').value = newExtraBudget;
-            document.getElementById('extra_budget_sum_3').value = newExtraBudget;
+            document.getElementById('extra_budget_sum_1').setAttribute('value', newExtraBudget);
+            document.getElementById('extra_budget_sum_3').setAttribute('value', newExtraBudget);
         } else {
 
             let budgetElements = document.querySelectorAll('[id^="budget_0_"]');
             budgetElements.forEach(function(element) {
                 newBudget += parseInt(element.value);
             });
-            document.getElementById('budget_sum_1').value = newBudget;
-            document.getElementById('budget_sum_3').value = newBudget;
+            document.getElementById('budget_sum_1').setAttribute('value', newBudget);
+            document.getElementById('budget_sum_3').setAttribute('value', newBudget);
         }
         let totalBudgetElements = document.querySelectorAll('[id^="budget_2_"]');
         totalBudgetElements.forEach(function(element) {
             newTotalBudget += parseInt(element.value);
         });
-        document.getElementById('budget_result_1').value = newTotalBudget;
-        document.getElementById('budget_result_3').value = newTotalBudget;
+        document.getElementById('budget_result_1').setAttribute('value', newTotalBudget);
+        document.getElementById('budget_result_3').setAttribute('value', newTotalBudget);
     }
-
-    
 });
 
  
