@@ -23,11 +23,6 @@ class TeacherAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(TeacherHasSubject)
-class TeacherHasSubjectAdmin(admin.ModelAdmin):
-    pass
-
-
 @admin.register(SpecialityHasCourse)
 class SpecialityHasCourseAdmin(admin.ModelAdmin):
     pass
@@ -37,6 +32,12 @@ class SpecialityHasCourseAdmin(admin.ModelAdmin):
 class HoursLoadAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(StateTeacherRow)
-class StateTeacherRowAdmin(admin.ModelAdmin):
+
+@admin.register(TeacherHours)
+class TeacherHoursAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(GroupHasSubject)
+class GroupHasSubjectAdmin(admin.ModelAdmin):
     pass

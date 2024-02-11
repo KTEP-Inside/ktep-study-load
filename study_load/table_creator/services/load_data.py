@@ -42,32 +42,44 @@ def create_table(ws: Worksheet,
     global is_paid
 
     if subject.value is not None:
+        # ПП И ПДП - делим значение каждой ячейки на количество преподов
         if subject.value.title() in ('Всего', 'Итого'):
             is_paid = True  # Вне бюджетные записи
 
     if teachers.value is not None and subject.value is not None:  # предмет + препод
 
+        teacher_mod = None
+        if subject.value.strip().startswith('ПП') or subject.value.strip().startswith('ПДП')\
+                or subject.value.strip() == 'Преддипломная практика':
+            teacher_mod = len(teachers.value.split(','))
+
+        if teacher_mod and not group.is_paid:
+            subject_obj = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=False)[0]
         # если это платный предмет в бесплатной группе
-        if is_paid and not group.is_paid:
+        elif is_paid and not group.is_paid:
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip(), is_paid=is_paid)[0]
         # у платной группы свой флаг, поэтому все предметы платные ,и у них нет флага. Так же у бесплатной
         else:
             subject_obj = Subject.objects.get_or_create(name=subject.value.strip())[0]
 
+        group_has_subject = GroupHasSubject.objects.get_or_create(group=group, subject=subject_obj)[0]
+
         for teacher_id, teacher in enumerate(teachers.value.split(',')):
             teacher_obj = Teacher.objects.get_or_create(name=teacher.strip())[0]
-            teacher_subject = TeacherHasSubject.objects.get_or_create(teacher=teacher_obj,
-                                                                      subject=subject_obj)[0]
 
             create_type_load(ws, subject=subject,
-                             group=group, teacher_subject=teacher_subject, teacher_id=teacher_id)
+                             group_has_subject=group_has_subject,
+                             teacher_id=teacher_id,
+                             teacher_obj=teacher_obj,
+                             teacher_mod=teacher_mod)
 
 
 def create_type_load(ws: Worksheet,
                      subject: Cell,
-                     group: SpecialityHasCourse,
-                     teacher_subject: TeacherHasSubject,
-                     teacher_id):
+                     group_has_subject: GroupHasSubject,
+                     teacher_id,
+                     teacher_obj: Teacher,
+                     teacher_mod):
     """Тип нагрузки и вызов создания записей по семестрам"""
     for load in ws.iter_cols(min_col=4, min_row=4, max_row=4):  # все типы нагрузки
 
@@ -80,9 +92,11 @@ def create_type_load(ws: Worksheet,
                     type_load_obj = TypeLoad.objects.get(name=load[0].value.strip())
 
                     semester_load_writer(ws, load=load, subject=subject,
-                                         group=group, type_load_obj=type_load_obj,
-                                         teacher_subject=teacher_subject,
-                                         teacher_id=teacher_id)
+                                         type_load_obj=type_load_obj,
+                                         group_has_subject=group_has_subject,
+                                         teacher_obj=teacher_obj,
+                                         teacher_id=teacher_id,
+                                         teacher_mod=teacher_mod)
         else:
 
             continue
@@ -91,10 +105,11 @@ def create_type_load(ws: Worksheet,
 def semester_load_writer(ws: Worksheet,
                          load,
                          subject: Cell,
-                         group: SpecialityHasCourse,
-                         teacher_subject: TeacherHasSubject,
+                         group_has_subject: GroupHasSubject,
                          type_load_obj: TypeLoad,
-                         teacher_id):
+                         teacher_id,
+                         teacher_obj: Teacher,
+                         teacher_mod):
     """Валидация и итоговые записи"""
 
     semester = 1
@@ -106,7 +121,8 @@ def semester_load_writer(ws: Worksheet,
         # возможно убрать, в шаблоне вроде не будет merge ячеек
         cur_cell = check_merge_cell(ws, cell, teacher_id)  # проверка на merge и взятие значение
         create_load(cur_cell, semester_obj=semester_obj, type_load_obj=type_load_obj,
-                    group=group, teacher_subject=teacher_subject)
+                    group_has_subject=group_has_subject,
+                    teacher=teacher_obj, teacher_mod=teacher_mod)
         semester += 1
 
 
@@ -140,8 +156,10 @@ def check_multi_value(cell, teacher_id):
 def create_load(cur_cell: str | int | float,
                 semester_obj: Semester,
                 type_load_obj: TypeLoad,
-                group: SpecialityHasCourse,
-                teacher_subject: TeacherHasSubject):
+                group_has_subject: GroupHasSubject,
+                teacher: Teacher,
+                teacher_mod
+                ):
     """Создание часов нагрзуки на определённый семестр, кол-во часов и тп"""
 
     # Проверка на тип добавления
@@ -150,20 +168,28 @@ def create_load(cur_cell: str | int | float,
 
     kwargs = {'semester': semester_obj,
               'type_load': type_load_obj,
-              'group': group,
-              'teacher_subject': teacher_subject}
+              'group_has_subject': group_has_subject,
+              'unallocated_hours': 0,
+              }
 
+    data = HoursLoad.objects.get_or_create(**kwargs)[0]
     if cur_cell in ['ДЗ', 'Э']:
         exam_obj = Exam.objects.get(exam=cur_cell)  # берем ДЗ или Э
-        data = HoursLoad.objects.get_or_create(**kwargs)[0]  # создаем запись нагрузки
         data.exam = exam_obj
-        data.hours = None
+        data.hours = 0
         data.save()
     else:
-        data = HoursLoad.objects.get_or_create(**kwargs)[0]  # создаем запись нагрузки
-        data.hours = cur_cell
+        if teacher_mod:
+            data.hours = cur_cell // teacher_mod
+        else:
+            data.hours = cur_cell
         data.exam = None
         data.save()
+
+    obj = TeacherHours.objects.get_or_create(teacher=teacher, hours_load=data)[0]
+    obj.cur_hours = data.hours
+    obj.cur_exam = data.exam
+    obj.save()
 
 
 def main_func(ws: Worksheet):

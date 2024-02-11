@@ -1,6 +1,8 @@
 import { getCookie } from './cookie-utils.js';
-let typeLoadElements = document.querySelectorAll(".type_load");
+import { deductFromBudget } from './budget-utils.js';
+import { openModal, closeModal } from './modal-utils.js';
 
+let typeLoadElements = document.querySelectorAll(".type_load");
 function addRow(flag=true) {
      // Функция, которая создает новую строку в таблице
         let table = document.getElementById('table_body');
@@ -14,6 +16,11 @@ function addRow(flag=true) {
 
         let cell2 = row.insertCell(1);
         cell2.innerHTML = '<select id="subject_' + rowCount + '" class="subject" name="subject_' + rowCount + '" ></select>';
+        let option = document.createElement('option');
+        option.value = '';
+        option.disabled = true;
+        option.setAttribute('selected', '');
+        cell2.querySelector('select').add(option);
 
         let cell3 = row.insertCell(2);
         cell3.innerHTML = '<select id="group_' + rowCount + '" class="group" name="group_' + rowCount + '"></select>';
@@ -41,19 +48,25 @@ function addRow(flag=true) {
         
 }
 
-function deleteRow() {
+function deleteRow(rowNumber=null) {
 
     let table = document.getElementById('table_body');
-    let rowNumberInput = document.getElementById('row_number_input');
-    let rowDelete = parseInt(rowNumberInput.value, 10);
+    let rowNumberInput;
+    let rowDelete;
+    if (rowNumber) {
+        rowNumberInput = rowNumber; 
+        rowDelete = parseInt(rowNumberInput, 10);
+    } else {
+        rowNumberInput = document.getElementById('row_number_input');
+        rowDelete = parseInt(rowNumberInput.value, 10);
+    }
 
     if (!isNaN(rowDelete) && rowDelete >= 0 && rowDelete <= table.rows.length) {
-        let curDelRow = table.rows[rowDelete - 1].cells
+        let curDelRow = table.rows[rowDelete - 1].cells;
 
-        let budget = curDelRow[curDelRow.length - 1].getElementsByTagName('input')[0].value;
+        let budget = curDelRow[curDelRow.length - 3].getElementsByTagName('input')[0].value;
         let extraBudget = curDelRow[curDelRow.length - 2].getElementsByTagName('input')[0].value;
-        let totalBudget = curDelRow[curDelRow.length - 3].getElementsByTagName('input')[0].value;
-        
+        let totalBudget = curDelRow[curDelRow.length - 1].getElementsByTagName('input')[0].value;        
         deductFromBudget(budget, extraBudget, totalBudget);
         
 
@@ -69,7 +82,7 @@ function deleteRow() {
         const curSubjectId = curSubject.options[curSubject.selectedIndex].value;
             if (curSubjectId){
             
-                fetch(`/delete-teacher-row-state/${selectedTeacherId}/${curGroupId}/${curSubjectId}/`, {
+                fetch(`/delete-row-for-teacher/${selectedTeacherId}/${curGroupId}/${curSubjectId}/`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -128,7 +141,7 @@ function deleteRow() {
             
         }
     } else {
-        alert('Недопустимый номер строки или такой строки не существует.');
+        openModal('Недопустимый номер строки или такой строки не существует.', 'warning');
     }
 }
 
@@ -139,7 +152,7 @@ function deleteRow() {
         cur_row.innerHTML = '<option value="" selected disabled></option>';
 
         if (selectedTeacherId) {
-            fetch(`/get-groups/${selectedTeacherId}/`)
+            fetch(`/get-groups/`)
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(function(group) {
@@ -161,16 +174,6 @@ function deleteRow() {
         }
 }
 
-function deductFromBudget(budget, extraBudget, totalBudget) {
-    document.getElementById('extra_budget_sum_1').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_1').value) - extraBudget);
-    document.getElementById('extra_budget_sum_3').setAttribute('value', parseInt(document.getElementById('extra_budget_sum_3').value) - extraBudget);
-    document.getElementById('budget_sum_1').setAttribute('value', parseInt(document.getElementById('budget_sum_1').value) - budget);
-    document.getElementById('budget_sum_3').setAttribute('value', parseInt(document.getElementById('budget_sum_3').value) - budget);
-    document.getElementById('budget_result_1').setAttribute('value', parseInt(document.getElementById('budget_result_1').value) - totalBudget);
-    document.getElementById('budget_result_3').setAttribute('value', parseInt(document.getElementById('budget_result_3').value) - totalBudget);
-
-}
-
 function clearTable() {
     const table = document.getElementById('table_body');
     while (table.rows.length > 0) {
@@ -178,13 +181,6 @@ function clearTable() {
     };
 };
 
-function clearBudget() {
-    for (let i = 1; i < 4; i++) {
-        document.getElementById(`extra_budget_sum_${i}`).setAttribute('value', 0);
-        document.getElementById(`budget_result_${i}`).setAttribute('value', 0);
-        document.getElementById(`budget_sum_${i}`).setAttribute('value', 0);
-    };
-};
 document.addEventListener('DOMContentLoaded', function() {
     let buttonAddRow = document.getElementById('add_row');
     let buttonDeleteRow = document.getElementById('delete_row');
@@ -199,4 +195,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-export { addRow, clearTable, clearBudget };
+let modal = document.getElementById("myModal");
+let span = document.getElementsByClassName("close")[0];
+  
+  // Закрываем модальное окно при нажатии на крестик
+  span.onclick = function() {
+    closeModal();
+  }
+  
+  // Закрываем модальное окно при клике вне его области
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      closeModal();
+    }
+  }
+  
+export { addRow, deleteRow, clearTable};
