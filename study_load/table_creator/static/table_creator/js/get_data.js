@@ -1,12 +1,13 @@
 import { getCookie } from './cookie-utils.js';
-import { addRow, clearTable, clearBudget } from './jobs_for_line.js';
+import { addRow, deleteRow, clearTable } from './jobs_for_line.js';
+import { createCurrentBudget, setCurrentBudget, clearBudget, deductFromBudget} from './budget-utils.js';
+import { openModal, closeModal } from './modal-utils.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     let teacherSelect = document.getElementById('teacher');
-    let mainTable = document.getElementById('table_body');
     let typeLoadElements = document.querySelectorAll(".type_load");
-    let tableResults = document.getElementById('table_results');
+    let mainTable = document.getElementById('table_body');
     const downloadButton = document.getElementById('download-data');
 
     teacherSelect.addEventListener('input', getDataForTeacher);
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } 
         // Проверяем, является ли элемент с классом 'subject'
         else if (target.classList.contains('subject')) {
-            onSubjectElementChange.call(target, event);
+            onSubjectElementChange.call(target);
         } 
     });
 
@@ -29,15 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Проверяем, является ли элемент с классом 'data-element'
         if (target.classList.contains('data-element')) {   
             
-            // Извлекаем номер строки из ID
             let row = target.id;
-            
             let regex = /(\d+)/g;
             let matches = row.match(regex);
             let rowid = matches[0];
             let newVal = document.getElementById(row).value;
 
-            
             // вызов отправки данных django
             let teacherSelect = document.getElementById('teacher').value;
             let groupSelect = document.getElementById(`group_${rowid}`).value;
@@ -70,18 +68,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.status == 'success') {
                     onChangeHours.call(target, rowid, event);
                     document.getElementById(row).setAttribute('value', newVal);
+                    document.getElementById(row).value = newVal;
+                    if (data.is_null) {
+                        deleteRow(rowid);
+                    }
+
                 } else if (data.status == 'validation-error') {
-                    alert(data.message);
+                    openModal(data.message, 'warning');
+                    document.getElementById(row).value = data.data;
                     document.getElementById(row).setAttribute('value', data.data);
                 } else {
+                    document.getElementById(row).value = data.data;
                     document.getElementById(row).setAttribute('value', data.data);
-
                 }
 
             })
-            .catch(error => console.error('Error:', error));
-
-            
+            .catch(error => console.error('Error:', error));            
         }
     });
 
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error:', error));
         } else {
-            alert('Выберите преподавателя!');
+            openModal('Выберите преподавателя!', 'warning');
         }
     });
 
@@ -131,20 +133,23 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`get-all-data-for-teacher/${teacherId}/`)
         .then(response => response.json())
         .then(data => {
+            teacherSelect.disabled = true;
+            setTeacherElementAndDocTitle();
             data.data.forEach(function (teacherData) {
                 let curGroup = addRow(true);
                 curGroup.options[curGroup.selectedIndex].value = teacherData.group;
                 curGroup.options[curGroup.selectedIndex].innerText = teacherData.name_group;
                 curGroup.options[curGroup.selectedIndex].setAttribute('data-is-paid', teacherData.group_is_paid);
 
-                setTeacherElementAndDocTitle();
                 let curSubject = onGroupElementChange.call(curGroup, true);
                 curSubject.options[curSubject.selectedIndex].value = teacherData.subject_id;
                 curSubject.options[curSubject.selectedIndex].innerText = teacherData.subject_name;
                 curSubject.options[curSubject.selectedIndex].setAttribute('data-is-paid', teacherData.subject_is_paid);
                 
-                onSubjectElementChange.call(curSubject);
+                onSubjectElementChange.call(curSubject, true);
             });
+            teacherSelect.disabled = false;
+
         });
     };
 
@@ -157,7 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function onGroupElementChange(flag=false) {
-        console.log(flag);
+
+        
         let selectedTeacherId = teacherSelect.value;
         let selectedGroupId = this.value;
 
@@ -167,11 +173,43 @@ document.addEventListener('DOMContentLoaded', function() {
         let groupSelected = document.getElementById('group_' + this.id.split('_')[1])
         let selectedValue = groupSelected.options[groupSelected.selectedIndex];
         let firstOption = groupSelected.options[0];
+
+    
+        if (!flag) {
+            let subjectValue = subjectElement.options[subjectElement.selectedIndex];
+            
+            if (subjectValue.value){
+                
+                let group = firstOption.value;
+                let subjectSelectId = subjectValue.value;
+                
+                deleteTeacherRow(selectedTeacherId, group, subjectSelectId);
+            };
+            
+            
+            let row = mainTable.rows[this.id.split('_')[1] - 1];
+            let cells = row.cells;
+            let last = typeLoadElements.length * 2 + 3 + 3;
+
+            let budget = cells[last - 3].getElementsByTagName('input')[0].value;
+            let extraBudget = cells[last - 2].getElementsByTagName('input')[0].value;
+            let totalBudget = cells[last - 1].getElementsByTagName('input')[0].value;
+            if (budget || extraBudget || totalBudget) {
+                deductFromBudget(budget, extraBudget, totalBudget);
+            }
+            for (let j = 3; j < last; j++) {
+                cells[j].getElementsByTagName('input')[0].value = 0;
+                cells[j].getElementsByTagName('input')[0].setAttribute('value', 0);
+                cells[j].getElementsByTagName('input')[0].disabled = true;
+            }
+
+        }
+        subjectElement.innerHTML = '<option value="" selected disabled></option>';
+
         firstOption.value = selectedValue.value;
         firstOption.innerText = selectedValue.innerText;
-
-        subjectElement.innerHTML = '<option value="" selected disabled></option>';
-        fetch(`/get-subjects/${selectedTeacherId}/${selectedGroupId}/`)
+    
+        fetch(`/get-subjects/${selectedGroupId}/`)
         .then(response => response.json())
         .then(data => {
             data.forEach(function (subject) {
@@ -193,9 +231,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function onSubjectElementChange() {
-        
-        console.log(this);
+    function onSubjectElementChange(flag=false) {
+        let curSubject = this;
         let rowId = this.id.split('_')[1];
         let selectedTeacherId = teacherSelect.value;
         let selectedSubjectId = this.value;
@@ -205,124 +242,177 @@ document.addEventListener('DOMContentLoaded', function() {
         let subjectSelected = document.getElementById('subject_' + this.id.split('_')[1])
         let selectedValue = subjectSelected.options[subjectSelected.selectedIndex];
         let firstOption = subjectSelected.options[0];
-        firstOption.value = selectedValue.value;
-        firstOption.innerText = selectedValue.innerText;
-
-        let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
-            return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
-                .then(response => response.json())
-                .then(data => {
-                    let semester = 1;
-                    data.forEach(function(hour_load) {
-                        let semesterVal = 0;
-                        if (hour_load.hours !== null) {
-                            semesterVal = hour_load.hours;
-                        } else {
-                            semesterVal = hour_load.exam;
-                        }
-                        let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
-                        document.getElementById(semesterId).setAttribute('value', semesterVal);
-                        document.getElementById(semesterId).disabled = false;
-                        semester++;
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching subjects:', error);
-                });
-        });
         
-        Promise.all(fetchPromises)
-            .then(() => {
-                let budget_sum = createCurrentBudget(rowId - 1);
-                setCurrentBudget(rowId - 1, budget_sum);
-        });
+        if (!flag) {
+            
+        };
+        if (flag) {
+            fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLoadElements,
+                 rowId, flag, firstOption, selectedValue) 
+        } else {
+        let valInBase = checkDoubleValue(rowId, selectedGroupId, selectedValue);
+            if (valInBase) {
+                curSubject.value = firstOption.value;
+                return
+            };
+        validateHoursLoad(selectedGroupId, selectedSubjectId)
+        .then(function(isValid) {
+            if (!isValid) {
+                curSubject.value = firstOption.value;
+                return
+            } else {
 
-        fetch(`/create-teacher-row-state/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
+                if (firstOption.value) {
+                    
+                    let subj = firstOption.value;
+                    deleteTeacherRow(selectedTeacherId, selectedGroupId, subj);
+                };
+                fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLoadElements,
+                     rowId, flag, firstOption, selectedValue) 
+            }
         })
+        .catch(function(error) {
+            console.error("Произошла ошибка при проверке:", error);
+        }); 
+        }
+    };
+
+});
+
+function onChangeHours(curRowId) {
+    let budget_sum = createCurrentBudget(curRowId-1);
+    setCurrentBudget(curRowId-1, budget_sum);   
+}
+
+function checkDoubleValue(rowId, selectedGroupId, selectedValue) {
+    let table = document.getElementById('table_body');
+    let rowCount = table.rows.length;
+
+    for (let i = 0; i < rowCount; i++) {
+        let rowGroup = table.rows[i].cells[2].getElementsByTagName('select')[0].value;
+        let rowSubject =  table.rows[i].cells[1].getElementsByTagName('select')[0].value;
+        if (i == rowId - 1) continue
+        if (selectedValue.value == rowSubject && selectedGroupId == rowGroup) {
+            openModal('У этого преподавателя уже есть такой предмет', 'warning');
+            return true
+        }
+        
+    };
+    return false
+}
+
+function createRowForTeacher (selectedTeacherId, selectedGroupId, selectedSubjectId, 
+    firstOption, selectedValue) {
+    fetch(`/create-row-for-teacher/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'error') {
+            console.error('Ошибка создания записи');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка запроса:', error);
+    });
+    firstOption.value = selectedValue.value;
+    firstOption.innerText = selectedValue.innerText;
+}
+
+
+function validateHoursLoad (selectedGroupId, selectedSubjectId) {
+    let url = `validate-group-has-subject-unallocated-hours/${selectedGroupId}/${selectedSubjectId}`;
+    return fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'error') {
-                console.error('Ошибка создания записи');
+            if (data.status === 'validation-error') {
+                openModal(data.message, 'warning');
+                return false;
+            } else if (data.status === 'error') {
+                console.log('Ошибка при валидации данных');
+                return false;
+            } else {
+                return true;
             }
         })
         .catch(error => {
             console.error('Ошибка запроса:', error);
+            return false;
         });
-    };
+}
 
-    function onChangeHours(curRowId) {
-        let budget_sum = createCurrentBudget(curRowId-1);
-        setCurrentBudget(curRowId-1, budget_sum);
-        
-    }
-
-    function createCurrentBudget(rowId) { 
-        let budget_sum = 0;
-        let cells = mainTable.rows[rowId].cells;
-        for (let i = 3; i < typeLoadElements.length * 2 + 3; i++) {
-            
-            let num = parseInt(cells[i].getElementsByTagName('input')[0].value);
-            if (!isNaN(num)) {
-                budget_sum += num;
-            }
-        }
-        return budget_sum;
-    }
-        
-    function setCurrentBudget(rowId, budget_sum) {
-        
-        let cells = mainTable.rows[rowId].cells;
-        let selectedOptionSubject = cells[1].getElementsByTagName('select')[0].querySelector('option:checked');
-        let selectedOptionGroup = cells[2].getElementsByTagName('select')[0].querySelector('option:checked');
-        let dataIsPaidValueSubject = selectedOptionSubject.getAttribute('data-is-paid');
-        let dataIsPaidValueGroup = selectedOptionGroup.getAttribute('data-is-paid');
-        
-        if (dataIsPaidValueSubject === 'true' | dataIsPaidValueGroup === 'true') {
-            document.getElementById(`budget_0_${rowId+1}`).setAttribute('value', 0);
-            document.getElementById(`budget_1_${rowId+1}`).setAttribute('value', budget_sum);
-        } else {
-            document.getElementById(`budget_0_${rowId+1}`).setAttribute('value', budget_sum);
-            document.getElementById(`budget_1_${rowId+1}`).setAttribute('value', 0);
-        }
-
-        document.getElementById(`budget_2_${rowId+1}`).setAttribute('value', budget_sum);
-        changeResults(dataIsPaidValueSubject, dataIsPaidValueGroup);
-    }
-    
-
-    function changeResults(isPaidSubject, isPaidGroup) {
-        let newBudget = 0;
-        let newExtraBudget = 0;
-        let newTotalBudget = 0;
-
-        if (isPaidSubject === 'true' | isPaidGroup === 'true') {
-            let extraBudgetElements = document.querySelectorAll('[id^="budget_1_"]');
-            extraBudgetElements.forEach(function(element) {
-                newExtraBudget += parseInt(element.value);
+function fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLoadElements, rowId, flag,
+    firstOption, selectedValue) {
+    let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
+        return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
+            .then(response => response.json())
+            .then(data => {
+                let semester = 1;
+                data.forEach(function(hour_load) {
+                    let semesterVal = 0;
+                    if (hour_load.cur_exam !== null) {
+                        semesterVal = hour_load.cur_exam;
+                    } else {
+                        semesterVal = hour_load.cur_hours;
+                    }
+                    let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
+                    document.getElementById(semesterId).value = semesterVal;
+                    document.getElementById(semesterId).setAttribute('value', semesterVal);
+                    document.getElementById(semesterId).disabled = false;
+                    semester++;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching subjects:', error);
             });
-            document.getElementById('extra_budget_sum_1').setAttribute('value', newExtraBudget);
-            document.getElementById('extra_budget_sum_3').setAttribute('value', newExtraBudget);
-        } else {
+    });
 
-            let budgetElements = document.querySelectorAll('[id^="budget_0_"]');
-            budgetElements.forEach(function(element) {
-                newBudget += parseInt(element.value);
-            });
-            document.getElementById('budget_sum_1').setAttribute('value', newBudget);
-            document.getElementById('budget_sum_3').setAttribute('value', newBudget);
-        }
-        let totalBudgetElements = document.querySelectorAll('[id^="budget_2_"]');
-        totalBudgetElements.forEach(function(element) {
-            newTotalBudget += parseInt(element.value);
+    Promise.all(fetchPromises)
+        .then(() => {
+            let budget_sum = createCurrentBudget(rowId - 1);
+            setCurrentBudget(rowId - 1, budget_sum);
+            if (!flag) {
+                createRowForTeacher(selectedTeacherId, selectedGroupId, selectedSubjectId,
+                    firstOption, selectedValue);
+            };
         });
-        document.getElementById('budget_result_1').setAttribute('value', newTotalBudget);
-        document.getElementById('budget_result_3').setAttribute('value', newTotalBudget);
-    }
-});
+}
 
- 
+function deleteTeacherRow(selectedTeacherId, selectedGroupId, subjectSelectId) {
+    fetch(`/delete-row-for-teacher/${selectedTeacherId}/${selectedGroupId}/${subjectSelectId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'error') {
+            console.error('Ошибка при удалении записи состояния');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка запроса:', error);
+    });
+}
+
+let modal = document.getElementById("myModal");
+let span = document.getElementsByClassName("close")[0];
+  
+  // Закрываем модальное окно при нажатии на крестик
+  span.onclick = function() {
+    closeModal();
+  }
+  
+  // Закрываем модальное окно при клике вне его области
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      closeModal();
+    }
+  }
+  

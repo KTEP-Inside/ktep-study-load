@@ -1,5 +1,6 @@
 import { getCookie } from './cookie-utils.js';
 import { deductFromBudget } from './budget-utils.js';
+import { openModal, closeModal } from './modal-utils.js';
 
 let typeLoadElements = document.querySelectorAll(".type_load");
 function addRow(flag=true) {
@@ -47,11 +48,18 @@ function addRow(flag=true) {
         
 }
 
-function deleteRow() {
+function deleteRow(rowNumber=null) {
 
     let table = document.getElementById('table_body');
-    let rowNumberInput = document.getElementById('row_number_input');
-    let rowDelete = parseInt(rowNumberInput.value, 10);
+    let rowNumberInput;
+    let rowDelete;
+    if (rowNumber) {
+        rowNumberInput = rowNumber; 
+        rowDelete = parseInt(rowNumberInput, 10);
+    } else {
+        rowNumberInput = document.getElementById('row_number_input');
+        rowDelete = parseInt(rowNumberInput.value, 10);
+    }
 
     if (!isNaN(rowDelete) && rowDelete >= 0 && rowDelete <= table.rows.length) {
         let curDelRow = table.rows[rowDelete - 1].cells;
@@ -133,7 +141,7 @@ function deleteRow() {
             
         }
     } else {
-        alert('Недопустимый номер строки или такой строки не существует.');
+        openModal('Недопустимый номер строки или такой строки не существует.', 'warning');
     }
 }
 
@@ -187,4 +195,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-export { addRow, clearTable};
+let modal = document.getElementById("myModal");
+let span = document.getElementsByClassName("close")[0];
+  
+  // Закрываем модальное окно при нажатии на крестик
+  span.onclick = function() {
+    closeModal();
+  }
+  
+  // Закрываем модальное окно при клике вне его области
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      closeModal();
+    }
+  }
+  
+export { addRow, deleteRow, clearTable};

@@ -4,6 +4,7 @@ from django.urls import reverse
 
 class Teacher(models.Model):
     name = models.CharField(unique=True, max_length=70, verbose_name='ФИО преподавателя')
+    hours_load = models.ManyToManyField('HoursLoad', through='TeacherHours')
 
     objects = models.Manager()
 
@@ -16,7 +17,6 @@ class Teacher(models.Model):
 
 class Subject(models.Model):
     name = models.CharField(unique=True, max_length=200, verbose_name='Предмет')
-    teachers = models.ManyToManyField(Teacher, through='TeacherHasSubject')
     is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
 
     objects = models.Manager()
@@ -26,16 +26,6 @@ class Subject(models.Model):
 
     def get_absolute_url(self):
         return reverse(viewname='subject', kwargs={'subject_id': self.pk})
-
-
-class TeacherHasSubject(models.Model):
-    teacher_has_subject = models.AutoField(primary_key=True)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    objects = models.Manager()
-
-    def __str__(self):
-        return f"{self.teacher}: {self.subject}"
 
 
 class TypeLoad(models.Model):
@@ -62,7 +52,7 @@ class Semester(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.number
+        return str(self.number)
 
 
 class Exam(models.Model):
@@ -70,7 +60,7 @@ class Exam(models.Model):
         exam = 'Э', 'Экзамен'
         test = 'ДЗ', 'Зачёт'
 
-    exam = models.CharField(max_length=2)
+    exam = models.CharField(max_length=2, verbose_name='ДЗ/Э')
 
     objects = models.Manager()
 
@@ -78,28 +68,8 @@ class Exam(models.Model):
         return self.exam
 
 
-class HoursLoad(models.Model):
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    type_load = models.ForeignKey(TypeLoad, on_delete=models.CASCADE)
-    group = models.ForeignKey('SpecialityHasCourse', on_delete=models.CASCADE)
-    teacher_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)
-    exam = models.ForeignKey(Exam, on_delete=models.SET_NULL, null=True)
-
-    objects = models.Manager()
-
-    def __str__(self):
-        if self.exam:
-            return f"{self.type_load} {self.group} {self.teacher_subject} {self.exam}"
-        else:
-            return f"{self.type_load} {self.group} {self.teacher_subject} {self.hours}"
-
-    class Meta:
-        unique_together = ['semester', 'type_load', 'group', 'teacher_subject']
-
-
 class Speciality(models.Model):
-    name = models.CharField(unique=True, max_length=30, verbose_name='Специальность')
+    name = models.CharField(unique=True, max_length=50, verbose_name='Специальность')
 
     objects = models.Manager()
 
@@ -130,7 +100,7 @@ class SpecialityHasCourse(models.Model):
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
     name_group = models.CharField(unique=True, max_length=60)
     is_paid = models.BooleanField(verbose_name='Б/ВБ', default=False)
-    teacher_table_state = models.ManyToManyField(TeacherHasSubject, 'StateTeacherRow')
+    group = models.ManyToManyField(Subject, through='GroupHasSubject')
 
     objects = models.Manager()
 
@@ -141,11 +111,50 @@ class SpecialityHasCourse(models.Model):
         return reverse(viewname='group', kwargs={'course_has_speciality': self.course_has_speciality})
 
 
-class StateTeacherRow(models.Model):
-    group = models.ForeignKey(SpecialityHasCourse, on_delete=models.CASCADE)
-    teacher_has_subject = models.ForeignKey(TeacherHasSubject, on_delete=models.CASCADE)
-
+class GroupHasSubject(models.Model):
+    group = models.ForeignKey(SpecialityHasCourse, on_delete=models.CASCADE, verbose_name='Группа')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, verbose_name='Предмет')
     objects = models.Manager()
 
     def __str__(self):
-        return f'{self.group}, {self.teacher_has_subject}'
+        return f'{self.group} {self.subject}'
+
+
+class HoursLoad(models.Model):
+    semester = models.ForeignKey(Semester, verbose_name='Семестр', on_delete=models.CASCADE)
+    type_load = models.ForeignKey(TypeLoad, verbose_name='Тип нагрузки', on_delete=models.CASCADE)
+    group_has_subject = models.ForeignKey(GroupHasSubject, verbose_name='Группа и Предмет',on_delete=models.CASCADE)
+    hours = models.IntegerField(default=None, verbose_name='Часы', null=True)
+    exam = models.ForeignKey(Exam, verbose_name='ДЗ/Э', on_delete=models.SET_NULL, null=True)
+    unallocated_hours = models.IntegerField(default=0, verbose_name='Нераспределённые часы')
+
+    objects = models.Manager()
+
+    class Meta:
+        unique_together = ['semester', 'type_load', 'group_has_subject']
+
+    def __str__(self):
+        if self.exam:
+            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.exam} |" \
+                   f"нр {self.unallocated_hours}"
+        else:
+            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.hours} |" \
+                   f"нр {self.unallocated_hours}"
+
+
+class TeacherHours(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    hours_load = models.ForeignKey(HoursLoad, on_delete=models.CASCADE)
+    cur_hours = models.IntegerField(default=0, verbose_name='Часы', null=True)
+    cur_exam = models.ForeignKey(Exam, on_delete=models.SET_NULL, null=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        unique_together = ['teacher', 'hours_load']
+
+    def __str__(self):
+        if self.cur_exam:
+            return f"{self.teacher} {self.hours_load} | {self.cur_exam}"
+        else:
+            return f"{self.teacher} {self.hours_load} | {self.cur_hours}"

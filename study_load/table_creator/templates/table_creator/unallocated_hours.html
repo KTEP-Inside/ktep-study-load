@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}н/р{% endblock %}
+
+{% block content %}
+<div class="unallocated-select-menu">
+    <select class="unallocated-groups unallocated-select" id="unallocated-groups">
+        <option hidden>Группа</option>
+        {% for group in groups %}
+            <option value="{{ group.pk }}">{{ group }}</option>
+        {% endfor %}
+    </select>
+    <h1>Нераспределенные часы</h1>
+    <select class="unallocated-subjects unallocated-select" id="unallocated-subjects">
+        <option hidden>Предмет</option>
+    </select>
+</div>
+<ul class="unallocated-hours-list" id="unallocated-rows-list">
+{% for obj in object_list %}
+    <li class="unallocated-hours-element">{{obj.semester}} семестр {{obj.group_has_subject}} {{obj.type_load}} нр: {{obj.unallocated_hours}} 
+        (Часов по умолчанию: {{obj.hours}}) </li>
+{% endfor %}
+</ul>
+
+<script type="module" src="{% static 'table_creator/js/unallocated-hours.js' %}"></script>
+<script type="module" src="{% static 'table_creator/js/cookie-utils.js' %}"></script>
+<script type="module" src="{% static 'table_creator/js/modal-utils.js' %}"></script>
+
+{% endblock%}

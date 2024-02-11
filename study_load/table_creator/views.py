@@ -5,12 +5,13 @@ from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views.generic import ListView
 from django.views.generic.edit import FormMixin
 
 from .forms import ClearDataForm
@@ -49,38 +50,24 @@ class MainView(LoginRequiredMixin, View):
 class GetGroupsView(LoginRequiredMixin, View):
     """Получение списка групп"""
 
-    def get(self, request, teacher_id):
-        teacher_has_subj = TeacherHasSubject.objects.filter(
-            teacher_id=teacher_id
-        ).values('teacher_has_subject').distinct()
+    # tut
+    def get(self, request):
+        groups = SpecialityHasCourse.objects.all() \
+            .order_by("name_group").values('name_group', 'course_has_speciality', 'is_paid')
 
-        group_ids = HoursLoad.objects.filter(
-            teacher_subject_id__in=teacher_has_subj
-        ).values('group_id').distinct()
-
-        name_group = SpecialityHasCourse.objects.filter(
-            course_has_speciality__in=group_ids
-        ).order_by("name_group").values('name_group', 'course_has_speciality', 'is_paid')
-
-        data = tuple(name_group)
+        data = tuple(groups)
         return JsonResponse(data, safe=False)
 
 
 class GetSubjectsView(LoginRequiredMixin, View):
     """Получение списка предметов"""
 
-    def get(self, request, teacher_id, group_id):
-        hours_load = HoursLoad.objects.filter(
-            group_id=group_id
-        ).values('teacher_subject_id').distinct()
-
-        subjects_id = TeacherHasSubject.objects.filter(
-            Q(teacher_has_subject__in=hours_load) & Q(teacher_id=teacher_id)
-        ).values('subject_id')
+    def get(self, request, group_id):
+        subjects_id = GroupHasSubject.objects.filter(group_id=group_id).all().values('subject_id')
 
         subjects = Subject.objects.filter(
             pk__in=subjects_id
-        ).order_by("name").values('pk', 'name', 'is_paid')
+        ).all().order_by("name").values('pk', 'name', 'is_paid')
 
         data = tuple(subjects)
         return JsonResponse(data, safe=False)
@@ -88,20 +75,34 @@ class GetSubjectsView(LoginRequiredMixin, View):
 
 class GetStudyLoadHoursView(LoginRequiredMixin, View):
     """Получение часов учебной нагрузки"""
-
+    # тут
     def get(self, request, teacher_id, group_id, subject_id, type_load_id):
 
-        teacher_has_subj = TeacherHasSubject.objects.get(
-            subject_id=subject_id, teacher_id=teacher_id).teacher_has_subject
+        group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
 
-        hours = HoursLoad.objects.filter(
-            Q(teacher_subject=teacher_has_subj) & Q(group_id=group_id) & Q(type_load_id=type_load_id)
-        ).order_by("semester").values('hours', 'exam')
+        hours_cells = HoursLoad.objects.filter(
+            Q(group_has_subject_id=group_has_subject.pk) & Q(type_load_id=type_load_id)
+        ).order_by("semester")
+
+        hours = TeacherHours.objects.filter(
+            Q(teacher_id=teacher_id) & Q(hours_load_id__in=hours_cells))
+
+        hours = hours.values('cur_hours', 'cur_exam')
+
+        flag = False
+        if not list(hours):
+            flag = True
+            hours = hours_cells.values(
+                cur_hours=F('hours'),
+                cur_exam=F('exam'))
 
         for i in range(len(hours)):
-            if hours[i]['exam'] is not None:
-                val = Exam.objects.get(pk=hours[i]['exam'])
-                hours[i]['exam'] = val.exam
+            if hours[i]['cur_exam'] is not None:
+                val = Exam.objects.get(pk=hours[i]['cur_exam'])
+                hours[i]['cur_exam'] = val.exam
+
+            elif flag:
+                hours[i]['cur_hours'] = hours_cells[i].unallocated_hours
 
         data = tuple(hours)
         return JsonResponse(data, safe=False)
@@ -114,12 +115,12 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request):
         if 'file_name' in request.FILES:
             uploaded_file = request.FILES['file_name']
-            try:
-                load_data(uploaded_file)
-                return redirect('upload-success')
+            # try:
+            load_data(uploaded_file)
+            return redirect('upload-success')
 
-            except Exception as e:
-                 return redirect('upload-error')
+            # except Exception as e:
+            #      return redirect('upload-error')
 
         return redirect('upload-error')
 
@@ -143,32 +144,47 @@ class CreateExcelReportView(PermissionRequiredMixin, LoginRequiredMixin, View):
         return response
 
 
-class CreateStateTeacherRowView(LoginRequiredMixin, View):
+class CreateRowForTeacherHoursView(LoginRequiredMixin, View):
+
     def post(self, request, teacher_id, group_id, subject_id):
-
-        teacher_has_subject = TeacherHasSubject.objects.get(
-            subject_id=subject_id, teacher_id=teacher_id).teacher_has_subject
-
         try:
-            StateTeacherRow.objects.get_or_create(group_id=group_id,
-                                                  teacher_has_subject_id=teacher_has_subject)
+            group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+            hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+            for hours in hours_load:
 
+                TeacherHours.objects.create(teacher_id=teacher_id,
+                                            hours_load_id=hours.pk,
+                                            cur_hours=hours.unallocated_hours,
+                                            cur_exam=hours.exam)
+
+                obj = HoursLoad.objects.get(pk=hours.pk)
+                obj.unallocated_hours = 0
+                obj.save()
             return JsonResponse({'status': 'success'})
+
         except Exception as e:
             return JsonResponse({'status': 'error'})
 
 
-class DeleteStateTeacherRowView(LoginRequiredMixin, View):
-
+class DeleteRowForTeacherHoursView(LoginRequiredMixin, View):
+    # нр
     def delete(self, request, teacher_id, group_id, subject_id):
-        teacher_has_subject = TeacherHasSubject.objects.get(
-            subject_id=subject_id, teacher_id=teacher_id).teacher_has_subject
+        group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+
+        hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject.pk) \
+            .values_list('pk', flat=True)
 
         try:
-            row = StateTeacherRow.objects.get(group_id=group_id,
-                                              teacher_has_subject_id=teacher_has_subject)
-            row.delete()
+            delete_row = TeacherHours.objects.filter(teacher_id=teacher_id, hours_load_id__in=hours_load)
 
+            for del_cel, un_cel in zip(delete_row, hours_load):
+
+                cur_del_cell = TeacherHours.objects.get(pk=del_cel.pk)
+                obj = HoursLoad.objects.get(pk=un_cel)
+                obj.unallocated_hours += cur_del_cell.cur_hours
+                obj.save()
+
+            delete_row.delete()
             return JsonResponse({'status': 'success'})
 
         except Exception as e:
@@ -176,13 +192,15 @@ class DeleteStateTeacherRowView(LoginRequiredMixin, View):
 
 
 class GetAllDataForTeacher(LoginRequiredMixin, View):
-
     def get(self, request, teacher_id):
 
         try:
-            teachers = TeacherHasSubject.objects.filter(teacher_id=teacher_id).values_list('teacher_has_subject', flat=True)
-            rows = StateTeacherRow.objects.filter(teacher_has_subject_id__in=teachers)\
-                .values('group', 'teacher_has_subject')
+            teacher = Teacher.objects.get(pk=teacher_id)
+            hours = TeacherHours.objects.filter(teacher=teacher).all().order_by('hours_load') \
+                .values_list('hours_load', flat=True)
+            groups_has_subjects = HoursLoad.objects.filter(pk__in=hours).values('group_has_subject').distinct()
+
+            rows = GroupHasSubject.objects.filter(pk__in=groups_has_subjects).values('group', 'subject_id')
 
             for row in range(len(rows)):
                 selected_group = SpecialityHasCourse.objects.get(
@@ -190,9 +208,7 @@ class GetAllDataForTeacher(LoginRequiredMixin, View):
                 rows[row]['name_group'] = selected_group.name_group
                 rows[row]['group_is_paid'] = selected_group.is_paid
 
-                subject_id = TeacherHasSubject.objects.get(teacher_has_subject=rows[row]['teacher_has_subject']).subject_id
-                subject = Subject.objects.get(pk=subject_id)
-                rows[row]['subject_id'] = subject_id
+                subject = Subject.objects.get(pk=rows[row]['subject_id'])
                 rows[row]['subject_is_paid'] = subject.is_paid
                 rows[row]['subject_name'] = subject.name
 
@@ -203,29 +219,38 @@ class GetAllDataForTeacher(LoginRequiredMixin, View):
 
 class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
     """Обновление ячейки в базе"""
+
     permission_required = 'table_creator.change_hoursload'
 
     @staticmethod
-    def _set_exam_or_hours(obj, exam=None, hours=None):
-        obj.exam = exam
-        obj.hours = hours
+    def _set_exam_or_hours(obj, unallocated_hours, exam=None, hours=0):
+        if exam:
+            unallocated_hours.unallocated_hours += obj.cur_hours
+        else:
+            unallocated_hours.unallocated_hours += (obj.cur_hours - hours)
+
+        unallocated_hours.save()
+        obj.cur_exam = exam
+        obj.cur_hours = hours
         obj.save()
+
+        return unallocated_hours.unallocated_hours
 
     @staticmethod
     def _get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id):
-        teacher_has_subj = get_object_or_404(TeacherHasSubject, subject_id=subject_id,
-                                             teacher_id=teacher_id)
 
         prev_val = 0
         try:
-            obj = HoursLoad.objects.get(
-                teacher_subject_id=teacher_has_subj, semester_id=semester_id, group_id=group_id,
+            group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+            cur_cell = HoursLoad.objects.get(
+                semester_id=semester_id, group_has_subject=group_has_subject,
                 type_load_id=type_load_id)
+            obj = TeacherHours.objects.get(teacher_id=teacher_id, hours_load_id=cur_cell.pk)
 
-            if obj.hours is None:
-                prev_val = obj.exam
-            elif obj.exam is None:
-                prev_val = obj.hours
+            if obj.cur_hours is None:
+                prev_val = obj.cur_exam
+            elif obj.cur_exam is None:
+                prev_val = obj.cur_hours
 
         except ObjectDoesNotExist:
             prev_val = 0
@@ -234,34 +259,55 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
 
         return prev_val
 
-    def _update_hours_load(self, teacher_has_subj, semester_id, group_id, type_load_id, val):
-        hours_load, created = HoursLoad.objects.get_or_create(
-            teacher_subject_id=teacher_has_subj,
+    def _update_hours_load(self, teacher_id, subject_id, semester_id,
+                           group_id, type_load_id, val):
+
+        group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+
+        hours_load_cell = HoursLoad.objects.get(
             semester_id=semester_id,
-            group_id=group_id,
+            group_has_subject=group_has_subject,
             type_load_id=type_load_id
         )
 
+        hours_load = TeacherHours.objects.get(teacher_id=teacher_id, hours_load_id=hours_load_cell.pk)
+
+        updated_on_hours = None
         if val in exams_type:
             exam = Exam.objects.get(exam=val)
-            self._set_exam_or_hours(hours_load if hours_load else created, exam=exam)
+            updated_on_hours = self._set_exam_or_hours(hours_load, hours_load_cell, exam=exam)
         elif val.isdigit():
             val = int(val)
-            self._set_exam_or_hours(hours_load if hours_load else created, hours=val)
+            validate_count_remaining_hours(hours_load, val, hours_load_cell)
+            updated_on_hours = self._set_exam_or_hours(hours_load, hours_load_cell, hours=val)
+
+        return updated_on_hours
+
+    def check_sum_in_str(self, teacher_id, group_id, subject_id):
+        group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+        hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+        teacher_hours = TeacherHours.objects.filter(teacher_id=teacher_id, hours_load_id__in=hours_load)\
+            .values('cur_hours', 'cur_exam')
+        _sum = sum([teacher_hours[i]['cur_hours'] for i in range(len(teacher_hours))])
+        # _exams = any([teacher_hours[i]['cur_exam'] for i in range(len(teacher_hours))])
+        if _sum == 0:
+            return True
+        else:
+            return False
 
     def put(self, request, teacher_id, group_id, subject_id, type_load_id, semester_id):
         try:
             val = json.loads(request.body)['val']
             validate_val(val)
 
-            teacher_has_subj = TeacherHasSubject.objects.get(
-                subject_id=subject_id, teacher_id=teacher_id)
-            teacher_has_subj = teacher_has_subj.teacher_has_subject
+            unallocated_hours = self._update_hours_load(teacher_id, subject_id, semester_id,
+                                                        group_id, type_load_id, val)
 
-            self._update_hours_load(teacher_has_subj, semester_id, group_id, type_load_id, val)
-
+            is_null = self.check_sum_in_str(teacher_id, group_id, subject_id)
             logger.info('Изменение значения в базе')
-            return JsonResponse({'status': 'success', 'message': 'Успешно'})
+
+            return JsonResponse({'status': 'success', 'message': 'Успешно', 'unallocated_hours': unallocated_hours,
+                                 'is_null': is_null})
 
         except ValidationError as validation_error:
             prev_val = self._get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id)
@@ -271,6 +317,23 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
         except Exception as e:
             prev_val = self._get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id)
             return JsonResponse({'status': 'error', 'message': str(e), 'data': prev_val})
+
+
+class ValidateHoursLoad(LoginRequiredMixin, View):
+
+    def get(self, request, group_id, subject_id):
+
+        try:
+            group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+            hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+
+            validate_remaining_hours(hours_load)
+            return JsonResponse({'status': 'success'})
+
+        except ValidationError as val_e:
+            return JsonResponse({'status': 'validation-error', 'message': str(val_e.message)})
+        except Exception as e:
+            return JsonResponse({'status': 'error'})
 
 
 class ClearDataView(PermissionRequiredMixin, LoginRequiredMixin, FormMixin, View):
@@ -310,7 +373,7 @@ class ClearDataView(PermissionRequiredMixin, LoginRequiredMixin, FormMixin, View
 
     @staticmethod
     def delete_data() -> None:
-        models_list = [Teacher, TeacherHasSubject, Subject, SpecialityHasCourse, HoursLoad]
+        models_list = [Teacher, Subject, SpecialityHasCourse, HoursLoad, TeacherHours, GroupHasSubject]
         for model in models_list:
             model.objects.all().delete()
 
@@ -323,6 +386,41 @@ class ClearDataDoneView(PermissionRequiredMixin, LoginRequiredMixin, View):
     def get(self, request):
         logger.info('Очистка базы')
         return render(request, self.template_name)
+
+
+class UnallocatedHours(PermissionRequiredMixin, LoginRequiredMixin, ListView):
+    template_name = 'table_creator/unallocated_hours.html'
+    permission_required = 'table_creator.delete_hourload'
+    model = HoursLoad
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['groups'] = SpecialityHasCourse.objects.all()
+        return context
+
+    def get_queryset(self):
+        queryset = HoursLoad.objects.exclude(unallocated_hours=0)
+        return queryset
+
+
+class UpdateUnallocatedData(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = 'table_creator.delete_hourload'
+
+    def get(self, request, group_id=None, subject_id=None):
+        queryset = HoursLoad.objects.exclude(unallocated_hours=0)
+
+        if group_id and subject_id:
+            group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
+            queryset = queryset.filter(group_has_subject=group_has_subject)
+        elif group_id:
+            group_has_subject = GroupHasSubject.objects.filter(group_id=group_id)
+            queryset = queryset.filter(group_has_subject_id__in=group_has_subject)
+        res = []
+        for obj in queryset:
+            st = f"{obj.semester} семестр {obj.group_has_subject} {obj.type_load}" \
+                 f" нр: {obj.unallocated_hours} (Часов по умолчанию: {obj.hours})"
+            res.append(st)
+        return JsonResponse({'status': 'success', 'data': res})
 
 
 @login_required
