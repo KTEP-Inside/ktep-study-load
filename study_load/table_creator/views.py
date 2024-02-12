@@ -115,12 +115,12 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request):
         if 'file_name' in request.FILES:
             uploaded_file = request.FILES['file_name']
-            # try:
-            load_data(uploaded_file)
-            return redirect('upload-success')
+            try:
+                load_data(uploaded_file)
+                return redirect('upload-success')
 
-            # except Exception as e:
-            #      return redirect('upload-error')
+            except Exception as e:
+                 return redirect('upload-error')
 
         return redirect('upload-error')
 
