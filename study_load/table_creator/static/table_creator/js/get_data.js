@@ -1,7 +1,8 @@
 import { getCookie } from './cookie-utils.js';
-import { addRow, deleteRow, clearTable } from './jobs_for_line.js';
+import { addRow, deleteRow, clearTable, checkTeacherText } from './jobs_for_line.js';
 import { createCurrentBudget, setCurrentBudget, clearBudget, deductFromBudget} from './budget-utils.js';
 import { openModal, closeModal } from './modal-utils.js';
+
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -242,14 +243,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let subjectSelected = document.getElementById('subject_' + this.id.split('_')[1])
         let selectedValue = subjectSelected.options[subjectSelected.selectedIndex];
         let firstOption = subjectSelected.options[0];
-        
-        if (!flag) {
-            
-        };
+
         if (flag) {
             fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLoadElements,
                  rowId, flag, firstOption, selectedValue) 
         } else {
+        
         let valInBase = checkDoubleValue(rowId, selectedGroupId, selectedValue);
             if (valInBase) {
                 curSubject.value = firstOption.value;
@@ -347,6 +346,7 @@ function validateHoursLoad (selectedGroupId, selectedSubjectId) {
 
 function fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLoadElements, rowId, flag,
     firstOption, selectedValue) {
+    let teacherSelect = document.getElementById('teacher');
     let fetchPromises = Array.from(typeLoadElements).map(typeLoad => {
         return fetch(`/get-hours/${selectedTeacherId}/${selectedGroupId}/${selectedSubjectId}/${typeLoad.id}/`)
             .then(response => response.json())
@@ -362,7 +362,11 @@ function fetchData(selectedTeacherId, selectedGroupId, selectedSubjectId, typeLo
                     let semesterId = `type-load_${rowId}_${typeLoad.id}_${semester}`;
                     document.getElementById(semesterId).value = semesterVal;
                     document.getElementById(semesterId).setAttribute('value', semesterVal);
-                    document.getElementById(semesterId).disabled = false;
+
+                    const selectedValue = teacherSelect.options[teacherSelect.selectedIndex].innerText;
+                    if (selectedValue !== 'Нр') {
+                        document.getElementById(semesterId).disabled = false;
+                    }
                     semester++;
                 });
             })
