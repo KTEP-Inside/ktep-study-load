@@ -28,12 +28,6 @@ urlpatterns = [
          DeleteRowForTeacherHoursView.as_view(), name='delete-row-for-teacher'),
     path('get-all-data-for-teacher/<int:teacher_id>/', GetAllDataForTeacher.as_view(), name='getAllDataForTeacher'),
 
-    path('unallocated-hours/', UnallocatedHours.as_view(), name='unallocated-hours'),
-    path('unallocated-hours-content-update/<int:group_id>/', UpdateUnallocatedData.as_view(),
-         name='unallocated-hours-content-update'),
-    path('unallocated-hours-content-update/<int:group_id>/<int:subject_id>/', UpdateUnallocatedData.as_view(),
-         name='unallocated-hours-content-update'),
-
     path('validate-group-has-subject-unallocated-hours/<int:group_id>/<int:subject_id>/', ValidateHoursLoad.as_view(),
          name='validate-group-has-subject-unallocated-hours')
 ]

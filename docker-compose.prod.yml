@@ -5,7 +5,7 @@ services:
     build:
       context: ./study_load
       dockerfile: Dockerfile-prod
-    command: gunicorn study_load.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn study_load.wsgi:application --timeout 600 --bind 0.0.0.0:8000
     expose:
       - 8000
     env_file:

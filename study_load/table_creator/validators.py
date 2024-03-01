@@ -20,13 +20,19 @@ def validate_val(value):
 
 
 def validate_count_remaining_hours(hours_load, value, unallocated_hours):
+    # проверка наличия часов в нр
     cur_val = value - hours_load.cur_hours
-    if cur_val > unallocated_hours.unallocated_hours:
+    if cur_val > unallocated_hours.cur_hours:
         raise ValidationError('Недостаточно часов в н/р')
 
 
 def validate_remaining_hours(hours_load):
-    cur_val = sum([i.unallocated_hours for i in hours_load])
+    # берем сумму всех часов
+    cur_val = sum_hours(hours_load)
     if cur_val <= 0:
         raise ValidationError('Недостаточно часов в н/р')
 
+
+def sum_hours(hours_load):
+    # берем сумму всех часов
+    return sum([i.cur_hours for i in hours_load])

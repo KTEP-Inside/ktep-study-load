@@ -126,7 +126,6 @@ class HoursLoad(models.Model):
     group_has_subject = models.ForeignKey(GroupHasSubject, verbose_name='Группа и Предмет',on_delete=models.CASCADE)
     hours = models.IntegerField(default=None, verbose_name='Часы', null=True)
     exam = models.ForeignKey(Exam, verbose_name='ДЗ/Э', on_delete=models.SET_NULL, null=True)
-    unallocated_hours = models.IntegerField(default=0, verbose_name='Нераспределённые часы')
 
     objects = models.Manager()
 
@@ -135,11 +134,9 @@ class HoursLoad(models.Model):
 
     def __str__(self):
         if self.exam:
-            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.exam} |" \
-                   f"нр {self.unallocated_hours}"
+            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.exam} |"
         else:
-            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.hours} |" \
-                   f"нр {self.unallocated_hours}"
+            return f"{self.semester} | {self.type_load} | {self.group_has_subject} | {self.hours} |"
 
 
 class TeacherHours(models.Model):
