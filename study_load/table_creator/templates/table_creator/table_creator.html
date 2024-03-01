@@ -12,6 +12,7 @@
       <td colspan="24" class="teacher-load">Педагогическая нагрузка
       <select id="teacher" class="teacher" name="teacher">
           <option value="" selected disabled></option>
+          <option value="{{ specific_teacher.pk }}">{{ specific_teacher }}</option>
           {% for teacher in teachers %}
             <option value="{{ teacher.pk }}">{{ teacher }}</option>
           {% endfor %}

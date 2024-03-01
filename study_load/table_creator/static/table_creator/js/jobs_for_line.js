@@ -3,7 +3,15 @@ import { deductFromBudget } from './budget-utils.js';
 import { openModal, closeModal } from './modal-utils.js';
 
 let typeLoadElements = document.querySelectorAll(".type_load");
-function addRow(flag=true) {
+function addRow(flag=false) {
+
+        let isUnallocatedHours = checkTeacherText();
+
+        if (!isUnallocatedHours && !flag) {
+            openModal('Невозможно удалить или добавить строку из нр вручную', 'warning');
+            return
+        }
+
      // Функция, которая создает новую строку в таблице
         let table = document.getElementById('table_body');
         let rowCount = table.rows.length;
@@ -48,7 +56,24 @@ function addRow(flag=true) {
         
 }
 
+function checkTeacherText() {
+    // является ли препод - Нр
+    const teacherSelect = document.getElementById('teacher');
+    const teacherTextValue = teacherSelect.options[teacherSelect.selectedIndex].innerText;
+
+    let flag = true;
+    if (teacherTextValue === 'Нр') {
+        flag = false;
+    }
+    return flag
+}
 function deleteRow(rowNumber=null) {
+
+    let isUnallocatedHours = checkTeacherText();
+    if (!isUnallocatedHours) {
+        openModal('Невозможно удалить или добавить строку из нр вручную', 'warning');
+        return
+    }
 
     let table = document.getElementById('table_body');
     let rowNumberInput;
@@ -72,7 +97,6 @@ function deleteRow(rowNumber=null) {
 
         const selectedTeacherId = document.getElementById('teacher').value;
 
-        
         const curGroup = document.getElementById(`group_${rowDelete}`);
         const curSubject = document.getElementById(`subject_${rowDelete}`);
 
@@ -210,4 +234,4 @@ let span = document.getElementsByClassName("close")[0];
     }
   }
   
-export { addRow, deleteRow, clearTable};
+export { addRow, deleteRow, clearTable, checkTeacherText};

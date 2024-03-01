@@ -6,8 +6,8 @@ from io import BytesIO
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q, F
-from django.http import JsonResponse, HttpResponse, FileResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, FileResponse
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -31,9 +31,11 @@ class MainView(LoginRequiredMixin, View):
     @staticmethod
     def get_context_data():
         type_load = TypeLoad.objects.all()
-        teachers = Teacher.objects.all().order_by("name")
+        specific_teacher = Teacher.objects.get_or_create(name='Нр')[0]
+        teachers = list(Teacher.objects.exclude(id=specific_teacher.id).order_by("name"))
         n = len(type_load)
         context = {
+            "specific_teacher": specific_teacher,
             'type_load': type_load,
             "type_load_length": n,
             'type_results': type_results,
@@ -75,7 +77,8 @@ class GetSubjectsView(LoginRequiredMixin, View):
 
 class GetStudyLoadHoursView(LoginRequiredMixin, View):
     """Получение часов учебной нагрузки"""
-    # тут
+
+    # tut
     def get(self, request, teacher_id, group_id, subject_id, type_load_id):
 
         group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
@@ -102,7 +105,13 @@ class GetStudyLoadHoursView(LoginRequiredMixin, View):
                 hours[i]['cur_exam'] = val.exam
 
             elif flag:
-                hours[i]['cur_hours'] = hours_cells[i].unallocated_hours
+                unallocated_teacher = Teacher.objects.get(name='Нр').pk
+                unallocated_cells = TeacherHours.objects.filter(teacher_id=unallocated_teacher,
+                                                                hours_load_id__in=hours_cells).order_by('pk')
+                if hours_cells[i].hours < unallocated_cells[i].cur_hours:
+                    hours[i]['cur_hours'] = hours_cells[i].hours
+                else:
+                    hours[i]['cur_hours'] = unallocated_cells[i].cur_hours
 
         data = tuple(hours)
         return JsonResponse(data, safe=False)
@@ -115,12 +124,12 @@ class ExcelFileUploadView(PermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request):
         if 'file_name' in request.FILES:
             uploaded_file = request.FILES['file_name']
-            try:
-                load_data(uploaded_file)
-                return redirect('upload-success')
 
-            except Exception as e:
-                 return redirect('upload-error')
+            load_data(uploaded_file)
+            return redirect('upload-success')
+
+            # except Exception as e:
+            #     return redirect('upload-error')
 
         return redirect('upload-error')
 
@@ -145,21 +154,39 @@ class CreateExcelReportView(PermissionRequiredMixin, LoginRequiredMixin, View):
 
 
 class CreateRowForTeacherHoursView(LoginRequiredMixin, View):
-
     def post(self, request, teacher_id, group_id, subject_id):
         try:
+            # берем Нр
+            unallocated_teacher = Teacher.objects.get(name='Нр').pk
+
             group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
-            hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+            hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)  # берем нужные записи часов
             for hours in hours_load:
+                # получаем записи из нр для сравнения часов
+                obj = TeacherHours.objects.get(teacher_id=unallocated_teacher, hours_load_id=hours.pk)
 
-                TeacherHours.objects.create(teacher_id=teacher_id,
-                                            hours_load_id=hours.pk,
-                                            cur_hours=hours.unallocated_hours,
-                                            cur_exam=hours.exam)
+                if obj.cur_hours > hours.hours:  # если часов больше
+                    cur_value = hours.hours  # берем значение по умолчанию
+                    obj.cur_hours -= hours.hours  # убираем часы из нр
+                    obj.cur_exam = hours.exam
+                else:
+                    cur_value = obj.cur_hours  # берем все оставшиеся часы из нр
+                    obj.cur_hours = 0  # в нр теперь 0
+                    obj.cur_exam = hours.exam
 
-                obj = HoursLoad.objects.get(pk=hours.pk)
-                obj.unallocated_hours = 0
+                teach_obj = TeacherHours.objects.get_or_create(teacher_id=teacher_id,
+                                                               hours_load_id=hours.pk)[0] # создаем запись
+
+                teach_obj.cur_hours += cur_value  # обновляем значение
+                teach_obj.cur_exam = hours.exam
+
+                # сохраняем изменения
                 obj.save()
+                teach_obj.save()
+
+            # если часов в нр не осталось - удаляем запись
+            check_sum_hours(hours_load, unallocated_teacher)
+
             return JsonResponse({'status': 'success'})
 
         except Exception as e:
@@ -167,7 +194,7 @@ class CreateRowForTeacherHoursView(LoginRequiredMixin, View):
 
 
 class DeleteRowForTeacherHoursView(LoginRequiredMixin, View):
-    # нр
+
     def delete(self, request, teacher_id, group_id, subject_id):
         group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
 
@@ -178,10 +205,12 @@ class DeleteRowForTeacherHoursView(LoginRequiredMixin, View):
             delete_row = TeacherHours.objects.filter(teacher_id=teacher_id, hours_load_id__in=hours_load)
 
             for del_cel, un_cel in zip(delete_row, hours_load):
-
                 cur_del_cell = TeacherHours.objects.get(pk=del_cel.pk)
-                obj = HoursLoad.objects.get(pk=un_cel)
-                obj.unallocated_hours += cur_del_cell.cur_hours
+
+                teacher = Teacher.objects.get(name='Нр').pk
+                obj = TeacherHours.objects.get_or_create(teacher_id=teacher, hours_load_id=del_cel.hours_load_id)[0]
+                obj.cur_hours += cur_del_cell.cur_hours
+                obj.cur_exam = None
                 obj.save()
 
             delete_row.delete()
@@ -225,16 +254,16 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
     @staticmethod
     def _set_exam_or_hours(obj, unallocated_hours, exam=None, hours=0):
         if exam:
-            unallocated_hours.unallocated_hours += obj.cur_hours
+            unallocated_hours.cur_hours += obj.cur_hours
         else:
-            unallocated_hours.unallocated_hours += (obj.cur_hours - hours)
+            unallocated_hours.cur_hours += (obj.cur_hours - hours)
 
         unallocated_hours.save()
         obj.cur_exam = exam
         obj.cur_hours = hours
         obj.save()
 
-        return unallocated_hours.unallocated_hours
+        return unallocated_hours.cur_hours
 
     @staticmethod
     def _get_prev_value(teacher_id, group_id, subject_id, type_load_id, semester_id):
@@ -270,23 +299,33 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
             type_load_id=type_load_id
         )
 
+        unallocated_teacher = Teacher.objects.get(name='Нр').pk
+
+        hours_load_cells = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+        for h in hours_load_cells:
+            TeacherHours.objects.get_or_create(teacher_id=unallocated_teacher,
+                                               hours_load_id=h.pk)
+
+        unallocated_hours = TeacherHours.objects.get(teacher_id=unallocated_teacher, hours_load_id=hours_load_cell.pk)
         hours_load = TeacherHours.objects.get(teacher_id=teacher_id, hours_load_id=hours_load_cell.pk)
 
         updated_on_hours = None
         if val in exams_type:
             exam = Exam.objects.get(exam=val)
-            updated_on_hours = self._set_exam_or_hours(hours_load, hours_load_cell, exam=exam)
+            updated_on_hours = self._set_exam_or_hours(hours_load, unallocated_hours, exam=exam)
+
         elif val.isdigit():
             val = int(val)
-            validate_count_remaining_hours(hours_load, val, hours_load_cell)
-            updated_on_hours = self._set_exam_or_hours(hours_load, hours_load_cell, hours=val)
+            validate_count_remaining_hours(hours_load, val, unallocated_hours)
+            updated_on_hours = self._set_exam_or_hours(hours_load, unallocated_hours, hours=val)
 
+        check_sum_hours(hours_load_cells, unallocated_teacher)
         return updated_on_hours
 
     def check_sum_in_str(self, teacher_id, group_id, subject_id):
         group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
         hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
-        teacher_hours = TeacherHours.objects.filter(teacher_id=teacher_id, hours_load_id__in=hours_load)\
+        teacher_hours = TeacherHours.objects.filter(teacher_id=teacher_id, hours_load_id__in=hours_load) \
             .values('cur_hours', 'cur_exam')
         _sum = sum([teacher_hours[i]['cur_hours'] for i in range(len(teacher_hours))])
         # _exams = any([teacher_hours[i]['cur_exam'] for i in range(len(teacher_hours))])
@@ -304,6 +343,8 @@ class UpdateHoursView(PermissionRequiredMixin, LoginRequiredMixin, View):
                                                         group_id, type_load_id, val)
 
             is_null = self.check_sum_in_str(teacher_id, group_id, subject_id)
+
+
             logger.info('Изменение значения в базе')
 
             return JsonResponse({'status': 'success', 'message': 'Успешно', 'unallocated_hours': unallocated_hours,
@@ -326,6 +367,8 @@ class ValidateHoursLoad(LoginRequiredMixin, View):
         try:
             group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
             hours_load = HoursLoad.objects.filter(group_has_subject=group_has_subject)
+            teacher = Teacher.objects.get(name='Нр').pk
+            hours_load = TeacherHours.objects.filter(teacher_id=teacher, hours_load_id__in=hours_load)
 
             validate_remaining_hours(hours_load)
             return JsonResponse({'status': 'success'})
@@ -386,41 +429,6 @@ class ClearDataDoneView(PermissionRequiredMixin, LoginRequiredMixin, View):
     def get(self, request):
         logger.info('Очистка базы')
         return render(request, self.template_name)
-
-
-class UnallocatedHours(PermissionRequiredMixin, LoginRequiredMixin, ListView):
-    template_name = 'table_creator/unallocated_hours.html'
-    permission_required = 'table_creator.delete_hourload'
-    model = HoursLoad
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['groups'] = SpecialityHasCourse.objects.all()
-        return context
-
-    def get_queryset(self):
-        queryset = HoursLoad.objects.exclude(unallocated_hours=0)
-        return queryset
-
-
-class UpdateUnallocatedData(PermissionRequiredMixin, LoginRequiredMixin, View):
-    permission_required = 'table_creator.delete_hourload'
-
-    def get(self, request, group_id=None, subject_id=None):
-        queryset = HoursLoad.objects.exclude(unallocated_hours=0)
-
-        if group_id and subject_id:
-            group_has_subject = GroupHasSubject.objects.get(group_id=group_id, subject_id=subject_id)
-            queryset = queryset.filter(group_has_subject=group_has_subject)
-        elif group_id:
-            group_has_subject = GroupHasSubject.objects.filter(group_id=group_id)
-            queryset = queryset.filter(group_has_subject_id__in=group_has_subject)
-        res = []
-        for obj in queryset:
-            st = f"{obj.semester} семестр {obj.group_has_subject} {obj.type_load}" \
-                 f" нр: {obj.unallocated_hours} (Часов по умолчанию: {obj.hours})"
-            res.append(st)
-        return JsonResponse({'status': 'success', 'data': res})
 
 
 @login_required

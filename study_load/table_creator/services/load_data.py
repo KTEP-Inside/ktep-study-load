@@ -169,7 +169,6 @@ def create_load(cur_cell: str | int | float,
     kwargs = {'semester': semester_obj,
               'type_load': type_load_obj,
               'group_has_subject': group_has_subject,
-              'unallocated_hours': 0,
               }
 
     data = HoursLoad.objects.get_or_create(**kwargs)[0]
@@ -182,6 +181,7 @@ def create_load(cur_cell: str | int | float,
         if teacher_mod:
             data.hours = cur_cell // teacher_mod
         else:
+            # возможная смена поведения ??
             data.hours = cur_cell
         data.exam = None
         data.save()
