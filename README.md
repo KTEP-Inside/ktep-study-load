@@ -7,6 +7,7 @@
 - detailed error output
 - move from templates to react/vue
 
+# Hosting
 - 1 Изменить `CSRF_TRUSTED_ORIGINS`и `ALLOWED_HOSTS` см. settings.py в файле
 - 2 Добавить почту для подключения смены пароля. см. settings.py
 - 3 Сделать `git clone` на сервере
