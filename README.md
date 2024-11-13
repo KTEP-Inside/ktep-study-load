@@ -1,5 +1,12 @@
 # ktep-study-load
 
+Веб-сайт для расчета часов учебной нагрузки для преподавателей в учебном заведении
+
+# What can be improved
+- add multithreading script for read excel files + celery
+- detailed error output
+- move from templates to react/vue
+
 - 1 Изменить `CSRF_TRUSTED_ORIGINS`и `ALLOWED_HOSTS` см. settings.py в файле
 - 2 Добавить почту для подключения смены пароля. см. settings.py
 - 3 Сделать `git clone` на сервере
